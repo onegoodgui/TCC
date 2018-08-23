@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "Estrutura_Trelica", "Estrutura_Trelica.vfproj", "{32327CDE-34CB-4356-9E31-99C66173C75A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{32327CDE-34CB-4356-9E31-99C66173C75A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{32327CDE-34CB-4356-9E31-99C66173C75A}.Debug|Win32.Build.0 = Debug|Win32
+		{32327CDE-34CB-4356-9E31-99C66173C75A}.Release|Win32.ActiveCfg = Release|Win32
+		{32327CDE-34CB-4356-9E31-99C66173C75A}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

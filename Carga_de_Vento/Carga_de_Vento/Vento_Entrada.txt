@@ -1,0 +1,31 @@
+&Fator_Top_S1
+
+caso = 'a'
+theta = 0
+z = 1
+d = 1
+
+/
+
+&Fator_Top_S2
+
+cat = "I"
+cls = "B"
+
+/
+
+&Pressao_dinamica
+
+Vk = 45
+area_influencia = 6
+/
+
+&Cofc_pressao
+
+h = 5
+a = 30
+b = 20 
+ang_cobertura = 15
+caso_Cpi = 'a'
+
+/
