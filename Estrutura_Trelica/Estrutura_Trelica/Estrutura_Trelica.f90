@@ -33,7 +33,7 @@
     real(8) :: L = 18                                        ! vão horizontal entre as extremidades do pórtico
     real(8) :: h1 = 0                                       ! altura do montante de extremidade
     integer :: n_div = 3                                    ! divisões do comprimento referente a L/2
-    integer :: theta =15                                    ! inclinação do banzo superior
+    integer :: theta = 15                                    ! inclinação do banzo superior
     !namelist /dad_entrada_trelica/ L, h1, n_div, theta   ! namelist com os dados necessários para montagem da estrutura
     type(node) :: coord
     type(barra_trelica), allocatable :: barra(:)
@@ -135,11 +135,12 @@
         type(node), intent(in) :: coord                                ! vetor com os nós e suas respectivas coordenadas
         type(barra_trelica), intent(out), allocatable :: barra(:)      ! vetor com as barras, suas conectividades e seu comprimento
         
-        integer :: n=0, i=0, k=0                                           ! contadores
+        integer :: n=0, i=0, k=0, n_barras                             ! contadores
         
         if(h1>0) then
             !---------COBERTURA TRAPEZOIDAL -----------
-            allocate(barra(8*n_div+1))
+            n_barras = 8*n_div+1
+            allocate(barra(n_barras))
             
             ! barras à esquerda em relação ao eixo de simetria ------------------            
             do i = 1, 2*n_div
@@ -223,7 +224,8 @@
             
         else
             !---------COBERTURA TRIANGULAR -----------
-            allocate(barra(8*n_div-3))
+            n_barras = 8*n_div-3
+            allocate(barra(n_barras))
             
             do i = 1, 2*n_div-1
                                 
@@ -326,10 +328,11 @@
         
         ! cálculo do comprimento de cada barra através das coordenadas das conectividades
         
+        do i = 1, n_barras
+            
+            barra(i)%comprimento = sqrt((barra(i)%node(2)%y - barra(i)%node(1)%y)**2 + (barra(i)%node(2)%x - barra(i)%node(1)%x)**2)
         
-        
-        
-        
+        end do
         
     end subroutine
     
