@@ -8,18 +8,29 @@
     
     ! Variáveis TYPE -------------------------------------------------------------------------------------
     type coordenadas
-        real(8) :: x
-        real(8) :: y
+        real(8) :: x                 ! [cm]
+        real(8) :: y                 ! [cm]
     end type
     
     type node
         type(coordenadas), allocatable :: no(:)
     end type
     
+    type cond_contorno
+        real(8) :: carga(2)           ! carga (1) -> carga na direção x / carga(2) -> carga na direção y 
+        real(8) :: glc(2)             ! glc(1) -> grau de liberdade da translação na direção do eixo x / glc(2) -> grau de liberdade da translação na direção do eixo y
+    end type
+    
+    type terca_list
+        character(20) :: nome
+        real(8) :: carga_linear        ! [KN/cm]
+        real(8) :: A                   ! [cm²]
+    end type
+    
     type barra_trelica
         type(coordenadas) :: node(2)
-        real(8) :: conectividades(2)
-        real(8) :: comprimento
+        integer :: conectividades(2)
+        real(8) :: comprimento        ! [cm]
         type(LLSt_var) :: s
     end type
         
@@ -32,13 +43,16 @@
     end type
     
     ! Variaveis para montagem da estrutura ---------------------------------------------------------------
-    real(8) :: L = 18                                        ! vão horizontal entre as extremidades do pórtico
-    real(8) :: h1 = 4                                       ! altura do montante de extremidade
-    integer :: n_div = 3                                    ! divisões do comprimento referente a L/2
-    integer :: theta = 15                                    ! inclinação do banzo superior
-    !namelist /dad_entrada_trelica/ L, h1, n_div, theta   ! namelist com os dados necessários para montagem da estrutura
+    real(8) :: L = 18.d0                                          ! vão horizontal entre as extremidades do pórtico [cm]
+    real(8) :: h1 = 4.d0                                          ! altura do montante de extremidade [cm]
+    integer :: n_div = 3                                          ! divisões do comprimento referente a L/2 [cm]
+    integer :: theta = 15                                         ! inclinação do banzo superior [°]
+    integer :: num_nos                                            ! numero total de nós da estrutura
+    namelist /dad_entrada_trelica/ h1, n_div, theta               ! namelist com os dados necessários para montagem da estrutura
     type(node) :: coord
+    type(cond_contorno), allocatable :: cond_cont(:)
     type(barra_trelica), allocatable :: barra(:)
+    type(terca_list), allocatable :: terca(:)
     
   
     
@@ -50,11 +64,12 @@
     
     
     !***********************************************************************************************************************************************
-    subroutine node_barras(n_div, h1, coord)  !Subrotina que numera os nós da treliça e calcula as coordenadas de cada nó na sua respectiva numeração
+    subroutine node_barras(n_div, h1, num_nos, coord)  !Subrotina que numera os nós da treliça e calcula as coordenadas de cada nó na sua respectiva numeração
     !***********************************************************************************************************************************************
-    integer(4), intent(in) :: n_div
-    real(8), intent(in) :: h1
-    type(node), intent(out) :: coord
+    integer(4), intent(in) :: n_div           ! número de divisões de L/2
+    real(8), intent(in) :: h1                 ! altura do montante de extremidade da cobertura treliçada
+    integer, intent(out) :: num_nos           ! numero total de nós da estrutura
+    type(node), intent(out) :: coord          ! variável de armazenamento das coordenadas dos nós
     
     integer :: i = 0, n = 0
     
@@ -62,7 +77,8 @@
         if (h1>0) then
             
             !---------COBERTURA TRAPEZOIDAL -----------
-            allocate(coord%no(4*n_div + 2))
+            num_nos = 4*n_div + 2
+            allocate(coord%no(num_nos))
              
                 ! atribuição de valores para as coordenadas x dos nós
             do i = 1, 2*n_div+1
@@ -81,11 +97,12 @@
                  end if
                  
                 coord%no(2*(i)-1)%y = 0.d0 
-                coord%no(2*(i))%y = h1 + (i-1)*tan(theta*pi/180)
+                coord%no(2*(i))%y = h1 + (i-1)*L/(2*n_div)*tan(theta*pi/180)
              end do
         else
             !---------COBERTURA TRIANGULAR -----------
-            allocate(coord%no(4*n_div))
+            num_nos = 4*n_div
+            allocate(coord%no(num_nos))
             
                 ! coordenadas do primeiro e último nó
             coord%no(1)%x  = 0
@@ -122,7 +139,7 @@
         integer(4), intent(in) :: n_div                                ! nº de divisões de L/2
         real(8), intent(in) :: h1                                      ! altura do montante de extremidade da cobertura
         type(node), intent(in) :: coord                                ! vetor com os nós e suas respectivas coordenadas
-        integer, intent(out) :: n_barras
+        integer, intent(out) :: n_barras                               ! número de barras da estrutura treliçada
         type(barra_trelica), intent(out), allocatable :: barra(:)      ! vetor com as barras, suas conectividades e seu comprimento
         
         
@@ -158,14 +175,14 @@
             end do
             !barra do meio --------------------------------------
             
-            barra(4*n_div+1)%conectividades(1) = i+1
-            barra(4*n_div+1)%conectividades(2) = i+2
+            barra(4*n_div+1)%conectividades(1) = i
+            barra(4*n_div+1)%conectividades(2) = i+1
             
-            barra(4*n_div+1)%node(1)%x = coord%no(i+1)%x
-            barra(4*n_div+1)%node(1)%y = coord%no(i+1)%y
+            barra(4*n_div+1)%node(1)%x = coord%no(i)%x
+            barra(4*n_div+1)%node(1)%y = coord%no(i)%y
             
-            barra(4*n_div+1)%node(2)%x = coord%no(i+2)%x
-            barra(4*n_div+1)%node(2)%y = coord%no(i+2)%y
+            barra(4*n_div+1)%node(2)%x = coord%no(i+1)%x
+            barra(4*n_div+1)%node(2)%y = coord%no(i+1)%y
             !---------------------------------------------------
             
             i=i+2
@@ -325,12 +342,13 @@
         
     end subroutine
     
+        !***************************************************************************************************************************************    
         subroutine secao_barras(n_cant, cant, n_barras, barra)
-        
-        integer, intent(in) :: n_cant
-        type(LLS_var), intent(in), allocatable :: cant(:)
-        integer, intent(in) :: n_barras
-        type(barra_trelica), intent(inout), allocatable :: barra(:)
+        !***************************************************************************************************************************************        
+        integer, intent(in) :: n_cant                                ! número de cantoneiras de abas iguais, de acordo com a tabela da AISC de novembro de 2017
+        type(LLS_var), intent(in), allocatable :: cant(:)            ! variável com os dados geométricos de cantoneiras simples de lados iguais
+        integer, intent(in) :: n_barras                              ! número de barras da estrutura treliçada
+        type(barra_trelica), intent(inout), allocatable :: barra(:)  ! vetor com dados geométricos e matriciais das barras da estrutura
         
         integer :: i = 0
         
@@ -384,5 +402,97 @@
         end if
         end subroutine
         
+        !********************************************************************************************************************
+        subroutine carga_pp_barras (rho, h1, n_div, num_nos, barra, cond_cont)
+        !********************************************************************************************************************
+        real(8), intent(in) :: rho                                      ! massa específica do material
+        real(8), intent(in) :: h1                                       ! altura do montante de extremidade da cobertura treliçada
+        integer, intent(in) :: n_div                                    ! nº de divisões de L/2
+        integer, intent(in) :: num_nos                                  ! número total de nós da estrutura treliçada
+        type(barra_trelica), intent(in), allocatable :: barra(:)        ! vetor com dados geométricos e matriciais das barras da estrutura
+        type(cond_contorno), intent(out), allocatable :: cond_cont(:)   ! vetor com as condições de contorno de cada nó da estrutura
+        
+        ! Variaveis internas
+        real(8), allocatable :: peso_regiao(:)
+        integer :: i=0, n=0
+        
+        allocate(peso_regiao(4*n_div))
+        allocate(cond_cont(num_nos))
+        
+            do i = 1, num_nos
+                cond_cont(i)%carga(:) = 0
+                cond_cont(i)%glc(:) = 0
+            end do
+            
+
+            if(h1>0) then
+            ! cálculo do peso da estrutura, dividida em 4*n_div regiões
+                do i = 1, n_div
+                    peso_regiao(2*i-1) =   rho*SUM(barra(1 +n*4: 1+n*4+3)%comprimento*barra(1 +n*4: 1+n*4+3)%s%A)/2
+                    peso_regiao(2*i) = rho*SUM(barra((2)+n*4: (2)+n*4+3)%comprimento*barra((2)+n*4: (2)+n*4+3)%s%A)/2
+                    peso_regiao(4*n_div-2*(i-1)) = peso_regiao(2*i-1)
+                    peso_regiao(4*n_div-2*(i-1)-1) = peso_regiao(2*i)
+                    n=n+1
+                end do
+                
+                do i = 1, n_div+1
+                    if ( i == 1) then
+                        cond_cont(2*i)%carga(2) = -peso_regiao(1)
+                        cond_cont(2*(2*n_div+1))%carga(2) = -peso_regiao(1)
+                        cycle
+                    end if
+                    cond_cont(2*i)%carga(2) = -(peso_regiao(2*(i-1)) + peso_regiao(2*(i-1)+1))
+                    cond_cont(2*(2*n_div+2) - 2*i)%carga(2) = cond_cont(2*i)%carga(2)
+                end do
+                
+            else
+            end if
+            
+            ! apoio da esquerda: apoio DUPLO / apoio da direita: apoio SIMPLES
+            cond_cont(1)%glc(:) = 1
+            cond_cont(num_nos-1)%glc(2) = 1
+        
+        end subroutine
+        
+        !********************************************************************************************************************
+        subroutine lista_tercas (unidade, terca)
+        !********************************************************************************************************************
+        
+        integer, intent(in) :: unidade                          ! unidade correspondente ao arquivo onde os dados das terças estão armazenados
+        type(terca_list), intent(out), allocatable :: terca(:)  ! Variavel que armazena as tercas e suas características identificadoras
+        
+        ! Variaveis internas
+        integer :: stat, num_tercas
+        character(20) :: junk
+        integer :: i=0, n=0
+        
+        do
+            read(unidade, iostat=stat) junk
+            num_tercas=stat-1
+            if (stat /= 0) exit
+        end do        
+        
+        allocate(terca(num_tercas))
+        rewind(unidade)
+        read(unidade,*) junk
+        
+        do i = 1, num_tercas
+            read(unidade, *) terca(i)%nome, terca(i)%carga_linear, terca(i)%A
+            terca(i)%carga_linear = terca(i)%carga_linear
+        end do
+        
+        
+        end subroutine
+        
+        !********************************************************************************************************************
+        subroutine carga_tercas_telhas_barras (h1, n_div, num_nos, barra, cond_cont)
+        !********************************************************************************************************************
+        real(8), intent(in) :: h1                                       ! altura do montante de extremidade da cobertura treliçada
+        integer, intent(in) :: n_div                                    ! nº de divisões de L/2
+        integer, intent(in) :: num_nos                                  ! número total de nós da estrutura treliçada
+        type(barra_trelica), intent(in), allocatable :: barra(:)        ! vetor com dados geométricos e matriciais das barras da estrutura
+        type(cond_contorno), intent(out), allocatable :: cond_cont(:)   ! vetor com as condições de contorno de cada nó da estrutura
+        
+        end subroutine
     end module Estrutura_Trelica
 

@@ -29,7 +29,9 @@
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\Estrutura_Trelica.f90"/>
 		<File RelativePath="..\..\..\otimização - analise 1\LLSt.f90"/>
+		<File RelativePath="..\..\..\MatrizRigidez\Mat_Rigidez.f90"/>
 		<File RelativePath="..\..\..\otimização - analise 1\new_LLS.f90"/>
-		<File RelativePath=".\ProgramaPrincipal.f90"/></Filter>
+		<File RelativePath=".\ProgramaPrincipal.f90"/>
+		<File RelativePath="..\..\..\MatrizRigidez\sislin_pbMEF.f90"/></Filter>
 		<File RelativePath=".\ReadMe.txt"/></Files>
 	<Globals/></VisualStudioProject>
