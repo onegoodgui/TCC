@@ -55,6 +55,7 @@
     call barras_trelica (n_div, h1, coord, n_barras, barra)
     call secao_barras(n_cant, cant, n_barras, barra)
     call carga_pp_barras (rho, h1, n_div, num_nos, barra, cond_cont)
+    call carga_tercas_telhas_barras (h1, dist_trelica, n_div, num_nos, barra, terca, cond_cont)
     
     do i =1, n_barras
         call matriz_rigidez_local(barra(i)%s%A, E, barra(i)%comprimento, k_local)

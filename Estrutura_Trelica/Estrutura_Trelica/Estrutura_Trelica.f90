@@ -27,6 +27,7 @@
         real(8) :: A                   ! [cm²]
     end type
     
+
     type barra_trelica
         type(coordenadas) :: node(2)
         integer :: conectividades(2)
@@ -43,8 +44,9 @@
     end type
     
     ! Variaveis para montagem da estrutura ---------------------------------------------------------------
-    real(8) :: L = 18.d0                                          ! vão horizontal entre as extremidades do pórtico [cm]
-    real(8) :: h1 = 4.d0                                          ! altura do montante de extremidade [cm]
+    real(8) :: L = 1800.d0                                        ! vão horizontal entre as extremidades do pórtico [cm]
+    real(8) :: h1 = 400.d0                                        ! altura do montante de extremidade [cm]
+    real(8) :: dist_trelica = 600.d0                              ! distância do vão entre dois pórticos consecutivos [cm]
     integer :: n_div = 3                                          ! divisões do comprimento referente a L/2 [cm]
     integer :: theta = 15                                         ! inclinação do banzo superior [°]
     integer :: num_nos                                            ! numero total de nós da estrutura
@@ -478,21 +480,65 @@
         
         do i = 1, num_tercas
             read(unidade, *) terca(i)%nome, terca(i)%carga_linear, terca(i)%A
-            terca(i)%carga_linear = terca(i)%carga_linear
+            terca(i)%carga_linear = terca(i)%carga_linear/10000
         end do
         
         
         end subroutine
         
         !********************************************************************************************************************
-        subroutine carga_tercas_telhas_barras (h1, n_div, num_nos, barra, cond_cont)
+        subroutine carga_tercas_telhas_barras (h1, dist_trelica, n_div, num_nos, barra, terca, cond_cont)
         !********************************************************************************************************************
-        real(8), intent(in) :: h1                                       ! altura do montante de extremidade da cobertura treliçada
-        integer, intent(in) :: n_div                                    ! nº de divisões de L/2
-        integer, intent(in) :: num_nos                                  ! número total de nós da estrutura treliçada
-        type(barra_trelica), intent(in), allocatable :: barra(:)        ! vetor com dados geométricos e matriciais das barras da estrutura
-        type(cond_contorno), intent(out), allocatable :: cond_cont(:)   ! vetor com as condições de contorno de cada nó da estrutura
+        real(8), intent(in) :: h1                                         ! altura do montante de extremidade da cobertura treliçada
+        real(8), intent(in) :: dist_trelica                               ! distância do vão entre dois pórticos consecutivos [cm]
+        integer, intent(in) :: n_div                                      ! nº de divisões de L/2
+        integer, intent(in) :: num_nos                                    ! número total de nós da estrutura treliçada
+        type(barra_trelica), intent(in), allocatable :: barra(:)          ! vetor com dados geométricos e matriciais das barras da estrutura
+        type(terca_list), intent(in), allocatable :: terca(:)             ! Variavel que armazena as tercas e suas características identificadoras
+        type(cond_contorno), intent(inout), allocatable :: cond_cont(:)   ! vetor com as condições de contorno de cada nó da estrutura
+        
+        ! Variaveis internas -----------------
+        real(8) :: carga_terca
+        real(8) :: carga_telha = 0.00000625d0
+        real(8), allocatable :: regiao_telha(:)
+        real(8) :: area_telha
+        integer :: i=0, n=0
+        
+
+        
+        !carga das tercas --------------------
+        carga_terca = terca(1)%carga_linear * dist_trelica
+        
+        do i=1, num_nos/2
+            if (i==1 .OR. i==num_nos/2) then
+                cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_terca/2
+                cycle
+            else if (2*i == 2*(n_div+1)) then
+                cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_terca*2
+                cycle
+            end if
+            cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_terca
+        end do       
+        
+        !carga das telhas -----------------------
+        allocate(regiao_telha(num_nos/2))
+        
+        area_telha = L/(2*n_div*cos(theta*pi/180)) * dist_trelica
+        carga_telha = carga_telha*area_telha
+        
+        do i = 1, num_nos/2
+            if(i == 1 .OR. i == num_nos/2) then
+                cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_telha/2
+                cycle
+            end if
+            cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_telha
+            
+        end do
+        
         
         end subroutine
+        
+        
+        
     end module Estrutura_Trelica
 
