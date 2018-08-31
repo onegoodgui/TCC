@@ -2,6 +2,7 @@
     module Estrutura_Trelica
 
     use LLSt
+    use sislin_pbMEF
     ! módulo para calculo dos esforços numa estrutura de treliça trapezoidal/triangular, de número de
     implicit none
 
@@ -33,6 +34,7 @@
         integer :: conectividades(2)
         real(8) :: comprimento        ! [cm]
         type(LLSt_var) :: s
+        real(8) :: peso
     end type
         
     
@@ -389,9 +391,9 @@
                 
                 nome_cant_trelica(1:n_barras) = ' '
                 nome_cant_trelica(i_banzo_superior) = cant(1)%name
-                nome_cant_trelica(i_banzo_inferior) = cant(2)%name
-                nome_cant_trelica(i_diagonal) = cant(3)%name
-                nome_cant_trelica(i_montante) = cant(4)%name
+                nome_cant_trelica(i_banzo_inferior) = cant(1)%name
+                nome_cant_trelica(i_diagonal) = cant(1)%name
+                nome_cant_trelica(i_montante) = cant(1)%name
                 
                 do i = 1, n_barras
                     barra(i)%s%secao = LLS_propriedades_cantoneira_lista(n_cant, cant, nome_cant_trelica(i))
@@ -405,13 +407,14 @@
         end subroutine
         
         !********************************************************************************************************************
-        subroutine carga_pp_barras (rho, h1, n_div, num_nos, barra, cond_cont)
+        subroutine carga_pp_barras (rho, h1, n_div, num_nos, n_barras, barra, cond_cont)
         !********************************************************************************************************************
         real(8), intent(in) :: rho                                      ! massa específica do material
         real(8), intent(in) :: h1                                       ! altura do montante de extremidade da cobertura treliçada
         integer, intent(in) :: n_div                                    ! nº de divisões de L/2
         integer, intent(in) :: num_nos                                  ! número total de nós da estrutura treliçada
-        type(barra_trelica), intent(in), allocatable :: barra(:)        ! vetor com dados geométricos e matriciais das barras da estrutura
+        integer, intent(in) :: n_barras                                 ! número total de barras da treliça
+        type(barra_trelica), intent(inout), allocatable :: barra(:)        ! vetor com dados geométricos e matriciais das barras da estrutura
         type(cond_contorno), intent(out), allocatable :: cond_cont(:)   ! vetor com as condições de contorno de cada nó da estrutura
         
         ! Variaveis internas
@@ -420,35 +423,42 @@
         
         allocate(peso_regiao(4*n_div))
         allocate(cond_cont(num_nos))
-        
+         
+            ! Zerando variáveis
             do i = 1, num_nos
                 cond_cont(i)%carga(:) = 0
                 cond_cont(i)%glc(:) = 0
             end do
             
-
-            if(h1>0) then
+            ! Atribuição de peso a cada barra
+            do i = 1, n_barras
+                barra(i)%peso = rho*barra(i)%s%A*barra(i)%comprimento
+            end do
+            
+            do i = 1, n_barras
+                cond_cont((barra(i)%conectividades(1)))%carga(2) = cond_cont((barra(i)%conectividades(1)))%carga(2) -barra(i)%peso/2
+                cond_cont((barra(i)%conectividades(2)))%carga(2) = cond_cont((barra(i)%conectividades(2)))%carga(2) -barra(i)%peso/2
+            end do
+            
             ! cálculo do peso da estrutura, dividida em 4*n_div regiões
-                do i = 1, n_div
-                    peso_regiao(2*i-1) =   rho*SUM(barra(1 +n*4: 1+n*4+3)%comprimento*barra(1 +n*4: 1+n*4+3)%s%A)/2
-                    peso_regiao(2*i) = rho*SUM(barra((2)+n*4: (2)+n*4+3)%comprimento*barra((2)+n*4: (2)+n*4+3)%s%A)/2
-                    peso_regiao(4*n_div-2*(i-1)) = peso_regiao(2*i-1)
-                    peso_regiao(4*n_div-2*(i-1)-1) = peso_regiao(2*i)
-                    n=n+1
-                end do
+                !do i = 1, n_div
+                 !   peso_regiao(2*i-1) =   rho*SUM(barra(1 +n*4: 1+n*4+3)%comprimento*barra(1 +n*4: 1+n*4+3)%s%A)/2
+                 !  peso_regiao(2*i) = rho*SUM(barra((2)+n*4: (2)+n*4+3)%comprimento*barra((2)+n*4: (2)+n*4+3)%s%A)/2
+                 !  peso_regiao(4*n_div-2*(i-1)) = peso_regiao(2*i-1)
+                 !   peso_regiao(4*n_div-2*(i-1)-1) = peso_regiao(2*i)
+                !    n=n+1
+                !end do
+               ! 
+                !do i = 1, n_div+1
+               !     if ( i == 1) then
+                !        cond_cont(2*i)%carga(2) = -peso_regiao(1)
+                !        cond_cont(2*(2*n_div+1))%carga(2) = -peso_regiao(1)
+                !!        cycle
+                 !   end if
+                 !   cond_cont(2*i)%carga(2) = -(peso_regiao(2*(i-1)) + peso_regiao(2*(i-1)+1))
+                 !   cond_cont(2*(2*n_div+2) - 2*i)%carga(2) = cond_cont(2*i)%carga(2)
+               ! end do
                 
-                do i = 1, n_div+1
-                    if ( i == 1) then
-                        cond_cont(2*i)%carga(2) = -peso_regiao(1)
-                        cond_cont(2*(2*n_div+1))%carga(2) = -peso_regiao(1)
-                        cycle
-                    end if
-                    cond_cont(2*i)%carga(2) = -(peso_regiao(2*(i-1)) + peso_regiao(2*(i-1)+1))
-                    cond_cont(2*(2*n_div+2) - 2*i)%carga(2) = cond_cont(2*i)%carga(2)
-                end do
-                
-            else
-            end if
             
             ! apoio da esquerda: apoio DUPLO / apoio da direita: apoio SIMPLES
             cond_cont(1)%glc(:) = 1
@@ -537,6 +547,8 @@
         
         
         end subroutine
+        
+        
         
         
         

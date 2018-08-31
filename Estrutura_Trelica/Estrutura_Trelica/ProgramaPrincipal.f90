@@ -3,6 +3,7 @@
     use Estrutura_Trelica
     use LLS
     use LLSt
+    use sislin_pbMEF
     use Matriz_Rigidez
     
     implicit none
@@ -16,22 +17,9 @@
     
     !Variaveis barra
     integer :: n_barras
-    real(8) :: rho = 0.000078d0          ! Massa específica do aço [KN/mm^3]
+    real(8) :: rho = 0.000078d0          ! Massa específica do aço [KN/cm³]
     
-    
-    !Variaveis Matriz de Rigidez
-    integer :: ngln = 2                             ! numero de graus de liberdade por nós
-    integer :: MDC                                  ! maxima diferença na conectividade da malha
-    integer :: nne = 2                              ! número de nos por elemento
-    integer :: nglc                                 ! numero de graus de liberdade com condição de contorno
-    integer :: ntgl                                 ! numero total de graus de liberdade
-    integer :: nncc                                 ! numero de nos com condição de contorno
-    integer :: nnf                                  ! numero de nos com forças atuantes
-    integer :: err
-    type(MDSB_pbMEF) :: MDSB_trelica
-    
-    namelist/nos_graus_liberdade/ nglc, nncc
-    namelist/nos_forcas/ ntgl, nnf
+  
     
     !Corpo do programa principal --------------------------------
     
@@ -54,8 +42,17 @@
     call node_barras(n_div, h1, num_nos, coord)
     call barras_trelica (n_div, h1, coord, n_barras, barra)
     call secao_barras(n_cant, cant, n_barras, barra)
-    call carga_pp_barras (rho, h1, n_div, num_nos, barra, cond_cont)
+    call carga_pp_barras (rho, h1, n_div, num_nos, n_barras, barra, cond_cont)
     call carga_tercas_telhas_barras (h1, dist_trelica, n_div, num_nos, barra, terca, cond_cont)
+    
+    !Matriz de rigidez
+    call vetor_Y_vglc (cond_cont, Y, v_glc)
+    
+    do i = 1, n_barras
+        call encontrar_MDC_pbMEF(nne,barra(i)%conectividades(:),MDC)
+    end do
+    
+    call iniciar_MDSB_pbMEF(num_nos,ngln,MDC,MDSB_trelica,err)
     
     do i =1, n_barras
         call matriz_rigidez_local(barra(i)%s%A, E, barra(i)%comprimento, k_local)
@@ -63,5 +60,8 @@
         call matriz_rigidez_global(k_local, T, k)
         call  adi_Me_MDSB_pbMEF(nne,barra(i)%conectividades(:),k,MDSB_trelica,err)
     end do 
+    
+    call cont_zero_MDSB_pbMEF_n(nglc,v_glc,MDSB_trelica)
+    call resolver_SLE_MDSB_pbMEF(MDSB_trelica,Y,err)
     
     end program Programa_Trelica
