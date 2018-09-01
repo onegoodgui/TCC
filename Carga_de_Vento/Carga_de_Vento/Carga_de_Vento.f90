@@ -47,8 +47,8 @@ module CargaVento
     
     type ang_vento
         
-        real(8) :: corte_1(2)   ! corte transversal que intercepta perpendicularmente as regiões G e E
-        real(8) :: corte_2(2)   ! corte transversal que intercepta perpendicularmente as regiões H e F
+        real(8) :: Ce_esquerda   ! corte transversal que intercepta perpendicularmente as regiões G e E
+        real(8) :: Ce_direita   ! corte transversal que intercepta perpendicularmente as regiões H e F
         
     end type
     
@@ -219,19 +219,23 @@ S2 = b*Fr*(z/10)**p
     end subroutine
     
     
-    subroutine Combinacao_carregamento_vento (h, a, b, ang_cobertura, pressao_vento, coef_comb)
+    subroutine Combinacao_carregamento_vento (h, a, b, ang_cobertura, pressao_vento, coef_max_succao, coef_min_succao)
     
     real(8), intent(in) :: h                        ! comprimento da altura da coluna de sustentação + montante imediatamente acima / vista frontal
     real(8), intent(in) :: a                        ! maior dimensão da estrutura em vista superior
     real(8), intent(in) :: b                        ! menor dimensão da estrutura em vista superior
     integer, intent(in) :: ang_cobertura            ! inclinação da viga de cobertura treliçada entre montante externo e intermediário
     type(Coef_pressao) :: pressao_vento(3)          ! Variável de armazenagem dos coeficientes Ce e Cpe
-    type(Combina_coef), intent(out) :: coef_comb
+    real(8), intent(out) :: coef_max_succao(2)
+    real(8), intent(out) :: coef_min_succao(2)
     
+    !Variaveis internas ----------------------------------------------------
     real(8) :: alturarelativa                       !altura relativa  --> h/b
     real(8) :: Ci(2)
-    integer :: i, n                                 ! contadores
+    integer :: i=0, n=0, j=0, k1, k2                  ! contadores
     integer :: n_linhas(3)                          ! Número de linhas de cada caso presente na tabela 5 da NBR 6123:2013
+    real(8) :: min, max
+    real(8), allocatable :: combinacao(:,:)        ! 
     
     ! definição do numero de linhas para cada caso
     n_linhas(1) = 8
@@ -255,32 +259,54 @@ S2 = b*Fr*(z/10)**p
         end if
     end do
     
-    coef_comb%ang_90%corte_1(1) = pressao_vento(i)%angulo_theta(n)%Ce(2)%valor
-    coef_comb%ang_90%corte_1(2) = pressao_vento(i)%angulo_theta(n)%Ce(1)%valor
-    coef_comb%ang_90%corte_2(1) = pressao_vento(i)%angulo_theta(n)%Ce(2)%valor
-    coef_comb%ang_90%corte_2(2) = pressao_vento(i)%angulo_theta(n)%Ce(1)%valor
-    
-    coef_comb%ang_0%corte_1(1) = pressao_vento(i)%angulo_theta(n)%Ce(3)%valor
-    coef_comb%ang_0%corte_1(2) = pressao_vento(i)%angulo_theta(n)%Ce(3)%valor
-    coef_comb%ang_0%corte_2(1) = pressao_vento(i)%angulo_theta(n)%Ce(4)%valor
-    coef_comb%ang_0%corte_2(2) = pressao_vento(i)%angulo_theta(n)%Ce(4)%valor
+    allocate(combinacao(6,2))
     
     ! Definição dos valores de Cpi (adotados conforme subitem 6.2.5, caso a) - NBR 6123/2013 
     Ci(1) = -0.2d0 ! (-) Sucção
     Ci(2) = 0.3d0 ! (+) Sobrepressão
     
-    ! Combinação de Ce + Cpi para cada caso
-    coef_comb%ang_90%corte_1(:) = coef_comb%ang_90%corte_1(:) + Ci(1)
-    coef_comb%ang_90%corte_2(:) = coef_comb%ang_90%corte_2(:) + Ci(2)
-        if (coef_comb%ang_0%corte_1(1) < coef_comb%ang_0%corte_2(1))then
-            coef_comb%ang_0%corte_2(:) = coef_comb%ang_0%corte_1(:)
-            coef_comb%ang_0%corte_1(:) = coef_comb%ang_0%corte_1(:) + Ci(1)
-            coef_comb%ang_0%corte_2(:) = coef_comb%ang_0%corte_2(:) + Ci(2)
-        end if
-        
+    !Combinacao A) [Ce = 90º + Ci = 0,2] -------------------------
+    combinacao(1,1) = pressao_vento(i)%angulo_theta(n)%Ce(2)%valor + Ci(1)
+    combinacao(1,2) = pressao_vento(i)%angulo_theta(n)%Ce(1)%valor + Ci(1)
     
+    !Combinacao B) [Ce = 90º + Ci = -0,3] -------------------------
+    combinacao(2,1) = pressao_vento(i)%angulo_theta(n)%Ce(2)%valor + Ci(2)
+    combinacao(2,2) = pressao_vento(i)%angulo_theta(n)%Ce(1)%valor + Ci(2)
+    
+    !Combinacao C) [Ce = 0º + Ci = 0,2] para GE -------------------------
+    combinacao(3,1) = pressao_vento(i)%angulo_theta(n)%Ce(3)%valor + Ci(1)
+    combinacao(3,2) = pressao_vento(i)%angulo_theta(n)%Ce(3)%valor + Ci(1)
+    
+    !Combinacao D) [Ce = 0º + Ci = -0,3] para GE -------------------------
+    combinacao(4,1) = pressao_vento(i)%angulo_theta(n)%Ce(3)%valor + Ci(2)
+    combinacao(4,2) = pressao_vento(i)%angulo_theta(n)%Ce(3)%valor + Ci(2)
+    
+    !Combinacao C) [Ce = 0º + Ci = 0,2] para FH -------------------------
+    combinacao(5,1) = pressao_vento(i)%angulo_theta(n)%Ce(4)%valor + Ci(1)
+    combinacao(5,2) = pressao_vento(i)%angulo_theta(n)%Ce(4)%valor + Ci(1)
+    
+    !Combinacao D) [Ce = 0º + Ci = -0,3] para FH -------------------------
+    combinacao(6,1) = pressao_vento(i)%angulo_theta(n)%Ce(4)%valor + Ci(2)
+    combinacao(6,2) = pressao_vento(i)%angulo_theta(n)%Ce(4)%valor + Ci(2)
+    
+    coef_min_succao(:) =   combinacao(1,1)
+    coef_max_succao(:) =   combinacao(1,1)
+    
+    do n = 1, 2
+        do j = 1, 6
+            if(combinacao(j,n) >= coef_min_succao(1) .AND. combinacao(j,n) >= coef_min_succao(2)) then
+                coef_min_succao(:) = combinacao(j,:)
+            end if
+            if (combinacao(j,n) <= coef_max_succao(1) .AND. combinacao(j,n) <= coef_max_succao(2)) then
+                coef_max_succao(:) = combinacao(j,:)
+            end if
+        end do
+    end do
+    
+  
     end subroutine
     
+    !subroutine carga_distribuida_vento(
     
     
     

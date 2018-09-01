@@ -26,7 +26,7 @@
     integer :: ang_cobertura                        ! inclinação da viga de cobertura treliçada entre montante externo e intermediário
     namelist /Cofc_pressao/ h, a, b, ang_cobertura  ! namelist com os valores de entrada para avaliar Ce e Cpe
     type(Coef_pressao) :: pressao_vento(3)          ! Variável de armazenamento dos coeficientes Ce e Cpe
-    type(Combina_coef) :: coef_comb
+    real(8) :: coef_min(2), coef_max(2)
     
     
     integer, parameter :: uni_dad_vento = 100                     ! nome dado para número que identifica arquivo externo
@@ -69,7 +69,7 @@
     
     ! Leitura dos dados de pressão Ce e Cpe ---------------------------------------------------------------------------------------
     call Coeficiente_pressao (pressao_vento)
-    call Combinacao_carregamento_vento (h, a, b, ang_cobertura, pressao_vento, coef_comb)
+    call Combinacao_carregamento_vento (h, a, b, ang_cobertura, pressao_vento, coef_min, coef_max)
       
     end program Teste
 
