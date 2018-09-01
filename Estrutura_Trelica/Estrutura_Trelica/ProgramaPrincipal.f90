@@ -54,14 +54,20 @@
     
     call iniciar_MDSB_pbMEF(num_nos,ngln,MDC,MDSB_trelica,err)
     
+    allocate(MatRigid(ngln*num_nos,ngln*num_nos))
+    MatRigid = 0.d0
+    
     do i =1, n_barras
         call matriz_rigidez_local(barra(i)%s%A, E, barra(i)%comprimento, k_local)
         call matriz_trasformacao(barra(i)%node(1)%x,barra(i)%node(1)%y, barra(i)%node(2)%x,barra(i)%node(2)%y, barra(i)%comprimento, T)
         call matriz_rigidez_global(k_local, T, k)
-        call  adi_Me_MDSB_pbMEF(nne,barra(i)%conectividades(:),k,MDSB_trelica,err)
+        call matriz_rigidez_estrutura(barra(i)%conectividades(1), barra(i)%conectividades(2), k, MatRigid)
     end do 
     
-    call cont_zero_MDSB_pbMEF_n(nglc,v_glc,MDSB_trelica)
-    call resolver_SLE_MDSB_pbMEF(MDSB_trelica,Y,err)
+    call matriz_rigidez_nos_restritos (nglc ,v_glc, MatRigid)
+    call eliminacao_gauss(MatRigid, Y)
+    call deslocamentos_matriz_rigidez(nglc, v_glc, MatRigid, Y, deslocamentos)
+    call forca_axial_barras(barra, n_barras, deslocamentos, forca_axial)
+    
     
     end program Programa_Trelica

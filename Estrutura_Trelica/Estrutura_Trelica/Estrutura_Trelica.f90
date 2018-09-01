@@ -18,8 +18,11 @@
     end type
     
     type cond_contorno
-        real(8) :: carga(2)           ! carga (1) -> carga na direção x / carga(2) -> carga na direção y 
-        real(8) :: glc(2)             ! glc(1) -> grau de liberdade da translação na direção do eixo x / glc(2) -> grau de liberdade da translação na direção do eixo y
+        real(8) :: carga_combinada(2)
+        real(8) :: carga_pp(2)
+        real(8) :: carga_telha_telhado(2)
+        real(8) :: carga_vento(2)           ! carga (1) -> carga na direção x / carga(2) -> carga na direção y 
+        real(8) :: glc(2)                   ! glc(1) -> grau de liberdade da translação na direção do eixo x / glc(2) -> grau de liberdade da translação na direção do eixo y
     end type
     
     type terca_list
@@ -49,7 +52,7 @@
     real(8) :: L = 1800.d0                                        ! vão horizontal entre as extremidades do pórtico [cm]
     real(8) :: h1 = 400.d0                                        ! altura do montante de extremidade [cm]
     real(8) :: dist_trelica = 600.d0                              ! distância do vão entre dois pórticos consecutivos [cm]
-    integer :: n_div = 3                                          ! divisões do comprimento referente a L/2 [cm]
+    integer :: n_div = 2                                          ! divisões do comprimento referente a L/2 [cm]
     integer :: theta = 15                                         ! inclinação do banzo superior [°]
     integer :: num_nos                                            ! numero total de nós da estrutura
     namelist /dad_entrada_trelica/ h1, n_div, theta               ! namelist com os dados necessários para montagem da estrutura
@@ -426,7 +429,7 @@
          
             ! Zerando variáveis
             do i = 1, num_nos
-                cond_cont(i)%carga(:) = 0
+                cond_cont(i)%carga_pp(:) = 0
                 cond_cont(i)%glc(:) = 0
             end do
             
@@ -436,8 +439,8 @@
             end do
             
             do i = 1, n_barras
-                cond_cont((barra(i)%conectividades(1)))%carga(2) = cond_cont((barra(i)%conectividades(1)))%carga(2) -barra(i)%peso/2
-                cond_cont((barra(i)%conectividades(2)))%carga(2) = cond_cont((barra(i)%conectividades(2)))%carga(2) -barra(i)%peso/2
+                cond_cont((barra(i)%conectividades(1)))%carga_pp(2) = cond_cont((barra(i)%conectividades(1)))%carga_pp(2) -barra(i)%peso/2
+                cond_cont((barra(i)%conectividades(2)))%carga_pp(2) = cond_cont((barra(i)%conectividades(2)))%carga_pp(2) -barra(i)%peso/2
             end do
             
             ! cálculo do peso da estrutura, dividida em 4*n_div regiões
@@ -521,13 +524,13 @@
         
         do i=1, num_nos/2
             if (i==1 .OR. i==num_nos/2) then
-                cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_terca/2
+                cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_terca/2
                 cycle
             else if (2*i == 2*(n_div+1)) then
-                cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_terca*2
+                cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_terca*2
                 cycle
             end if
-            cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_terca
+            cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_terca
         end do       
         
         !carga das telhas -----------------------
@@ -538,10 +541,10 @@
         
         do i = 1, num_nos/2
             if(i == 1 .OR. i == num_nos/2) then
-                cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_telha/2
+                cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_telha/2
                 cycle
             end if
-            cond_cont(2*i)%carga(2) = cond_cont(2*i)%carga(2) - carga_telha
+            cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_telha
             
         end do
         
