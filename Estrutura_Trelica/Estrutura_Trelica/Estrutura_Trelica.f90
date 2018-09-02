@@ -1,5 +1,4 @@
-
-    module Estrutura_Trelica
+module Estrutura_Trelica
 
     use LLSt
     use sislin_pbMEF
@@ -9,8 +8,8 @@
     
     ! Variáveis TYPE -------------------------------------------------------------------------------------
     type coordenadas
-        real(8) :: x                 ! [cm]
-        real(8) :: y                 ! [cm]
+        real(8) :: x   ! [cm]
+        real(8) :: y   ! [cm]
     end type
     
     type node
@@ -49,13 +48,12 @@
     end type
     
     ! Variaveis para montagem da estrutura ---------------------------------------------------------------
-    real(8) :: L = 1800.d0                                        ! vão horizontal entre as extremidades do pórtico [cm]
-    real(8) :: h1 = 400.d0                                        ! altura do montante de extremidade [cm]
-    real(8) :: dist_trelica = 600.d0                              ! distância do vão entre dois pórticos consecutivos [cm]
-    integer :: n_div = 2                                          ! divisões do comprimento referente a L/2 [cm]
-    integer :: theta = 15                                         ! inclinação do banzo superior [°]
-    integer :: num_nos                                            ! numero total de nós da estrutura
-    namelist /dad_entrada_trelica/ h1, n_div, theta               ! namelist com os dados necessários para montagem da estrutura
+    real(8) :: L                                               ! vão horizontal entre as extremidades do pórtico [cm]
+    real(8) :: h1                                              ! altura do montante de extremidade [cm]
+    real(8) :: dist_trelica                                    ! distância do vão entre dois pórticos consecutivos [cm]
+    integer :: n_div                                           ! divisões do comprimento referente a L/2 [cm]
+    integer :: theta                                           ! numero total de nós da estrutura
+    integer :: num_nos
     type(node) :: coord
     type(cond_contorno), allocatable :: cond_cont(:)
     type(barra_trelica), allocatable :: barra(:)

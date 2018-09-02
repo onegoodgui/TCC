@@ -1,7 +1,7 @@
 &Fator_Top_S1
 
 caso = 'a'
-theta = 0
+theta = 15
 z = 1
 d = 1
 
@@ -16,8 +16,7 @@ cls = "B"
 
 &Pressao_dinamica
 
-Vk = 45
-area_influencia = 6
+Vo = 45
 /
 
 &Cofc_pressao
@@ -26,6 +25,13 @@ h = 5
 a = 30
 b = 20 
 ang_cobertura = 15
-caso_Cpi = 'a'
+/
+
+&Dados_geometricos
+
+L = 1800
+h1 = 400
+dist_trelica = 600
+n_div = 2
 
 /
