@@ -46,7 +46,9 @@
     real(8) :: F(2)                                   ! Carga distribuida do vento
     !Variables Dados Geométricos ----------------------------------------------------------------------------------------------------
     namelist /Dados_geometricos/ L, h1, dist_trelica, n_div    ! namelist com os valores de entrada referentes às imposições geométricas da estrutura
-    
+    !Variables Combinação de ações --------------------------------------------------------------------------------------------------
+    type(comb_acoes) :: comb_acao(5)
+    !namelist /Comb_acoes/ comb_acao(1)%nome, comb_acao(2)%nome, comb_acao(3)%nome, comb_acao(4)%nome, comb_acao(5)%nome
     
     integer, parameter :: uni_dad_vento = 100                     ! nome dado para número que identifica arquivo externo
     integer :: i                                                  ! variavel de recurso cíclico
@@ -126,14 +128,20 @@
     !Calcula a carga distribuída na cobertura devido à ação do vento
     call carga_distribuida_vento(Vo, S1, S2, coef_max_succao, barra, F)
     
-    !Matriz de rigidez
+    !Calcula as cargas nodais da ação do vento na estrutura
+    call carga_vento_sobrecarga_nos(theta, barra, F, cond_cont)
+    
+    !Calcula as combinações de ações para Combinações Últimas Normais 
+    call combina_acoes (cond_cont, comb_acao)
+    
+    !Matriz de rigidez - vetor de deslocamentos fixos e livres / vetor de cargas
     call vetor_Y_vglc (cond_cont, Y, v_glc)
     
-    do i = 1, n_barras
-        call encontrar_MDC_pbMEF(nne,barra(i)%conectividades(:),MDC)
-    end do
+   ! do i = 1, n_barras
+   !     call encontrar_MDC_pbMEF(nne,barra(i)%conectividades(:),MDC)
+   ! end do
     
-    call iniciar_MDSB_pbMEF(num_nos,ngln,MDC,MDSB_trelica,err)
+    !call iniciar_MDSB_pbMEF(num_nos,ngln,MDC,MDSB_trelica,err)
     
     allocate(MatRigid(ngln*num_nos,ngln*num_nos))
     MatRigid = 0.d0

@@ -16,10 +16,10 @@ module Estrutura_Trelica
         type(coordenadas), allocatable :: no(:)
     end type
     
-    type cond_contorno
-        real(8) :: carga_combinada(2)
-        real(8) :: carga_pp(2)
-        real(8) :: carga_telha_telhado(2)
+    type cond_contorno       
+        real(8) :: carga_pp(2)              ! carga (1) -> carga na direção x / carga(2) -> carga na direção y
+        real(8) :: carga_sobrecarga(2)      ! carga (1) -> carga na direção x / carga(2) -> carga na direção y
+        real(8) :: carga_telha_telhado(2)   ! carga (1) -> carga na direção x / carga(2) -> carga na direção y 
         real(8) :: carga_vento(2)           ! carga (1) -> carga na direção x / carga(2) -> carga na direção y 
         real(8) :: glc(2)                   ! glc(1) -> grau de liberdade da translação na direção do eixo x / glc(2) -> grau de liberdade da translação na direção do eixo y
     end type
@@ -40,11 +40,9 @@ module Estrutura_Trelica
     end type
         
     
-    type estrutura
-        real(8), allocatable :: montante(:)
-        real(8), allocatable :: banzo_inferior(:)
-        real(8), allocatable :: diagonal(:)
-        real(8), allocatable :: banzo_superior(:)
+    type comb_acoes
+        character(30) :: nome
+        type(coordenadas), allocatable :: carga_nodal(:)
     end type
     
     ! Variaveis para montagem da estrutura ---------------------------------------------------------------
@@ -415,7 +413,7 @@ module Estrutura_Trelica
         integer, intent(in) :: n_div                                    ! nº de divisões de L/2
         integer, intent(in) :: num_nos                                  ! número total de nós da estrutura treliçada
         integer, intent(in) :: n_barras                                 ! número total de barras da treliça
-        type(barra_trelica), intent(inout), allocatable :: barra(:)        ! vetor com dados geométricos e matriciais das barras da estrutura
+        type(barra_trelica), intent(inout), allocatable :: barra(:)     ! vetor com dados geométricos e matriciais das barras da estrutura
         type(cond_contorno), intent(out), allocatable :: cond_cont(:)   ! vetor com as condições de contorno de cada nó da estrutura
         
         ! Variaveis internas
@@ -424,9 +422,13 @@ module Estrutura_Trelica
         
         allocate(peso_regiao(4*n_div))
         allocate(cond_cont(num_nos))
+        
          
             ! Zerando variáveis
             do i = 1, num_nos
+                cond_cont(i)%carga_vento(:) = 0
+                cond_cont(i)%carga_telha_telhado(:) = 0
+                cond_cont(i)%carga_sobrecarga(:) = 0
                 cond_cont(i)%carga_pp(:) = 0
                 cond_cont(i)%glc(:) = 0
             end do
@@ -546,8 +548,8 @@ module Estrutura_Trelica
             
         end do
         
-        
         end subroutine
+        
         
         
         
