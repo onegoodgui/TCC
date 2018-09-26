@@ -1,0 +1,55 @@
+&execHSA
+
+tipo_problema = 'trelica1'
+NEA = 50
+ffop =
+/
+
+&parametros_HSA
+
+param%nvD = 4
+param%nvC = 0
+param%Li_vd = 4*1
+param%Ls_vd = 4*33
+param%Li_vc = 0
+param%Ls_vc = 0
+
+param%maxIT = 3000
+param%maxAF = 2000
+
+param%verificar_parametros = .false.
+
+param%contador = 'it'
+param%maxHMS = 24
+param%HMS_tf = 'cst'
+param%HMS_c = 24
+
+
+param%HMCRvd_tf = 4*'cst'
+param%HMCRvd_c = 4*0.95
+
+param%PARvd_tf = 4*'cst'
+param%PARvd_c = 4*0.2
+    
+param%PAbw_vd_tf = 4*'cst'
+param%PAbw_vd_c = 4*3
+
+
+
+
+param%HMCRvc_tf = 'cst'
+param%HMCRvc_c = 0
+
+param%PARvc_tf = 'cst'
+param%PARvc_c = 0
+    
+param%PAbw_vc_tf = 'cst'
+param%PAbw_vc_c = 0
+
+
+
+param%uni_imp_par = 0
+param%verb_t = 1
+    
+
+/

@@ -1,5 +1,8 @@
 module CargaVento
     
+    use Estrutura_Trelica
+    
+    
     implicit none
     
    !*****************************************************************************************************!
@@ -64,7 +67,6 @@ module CargaVento
     
     integer, parameter :: uni_dad_S2 = 101  
     integer, parameter :: uni_dad_pressao = 110 
-    real(8), parameter, private:: pi = 4.d0*atan(1.d0)              ! Constante matemática pi
     real(8) :: S1                                                   ! Fator topográfico S1
     real(8) :: S2                                                   ! Fator topográfico S2
     ! -----------------------------------------------------------------------------------------------------------------------------
@@ -75,7 +77,7 @@ module CargaVento
     subroutine Fator_Topografico_S1 (caso, theta, z, d, S1)
     
     character(4), intent(in) :: caso               ! a) Terreno plano ou fracamente acidentado; b) Taludes e morros; c) Vales profundos
-    real(8), intent(in) :: theta                   ! Inclinação média do talude ou enconsta de morro
+    integer, intent(in) :: theta                   ! Inclinação média do talude ou enconsta de morro
     real(8), intent(in) :: z                       ! Altura medida a partir da superfície do terreno no ponto considerado
     real(8), intent(in) :: d                       ! diferença de nível entre a base e o topo do talude ou morro
     real(8), intent(out) :: S1                     ! Fator topográfico S1
@@ -156,9 +158,9 @@ module CargaVento
         p = tab_S2(i)%classe(n)%p
  
 ! -- Obtenção do parâmetro Fr --
-    if (n .EQV. 'a') then
+    if ( cls == 'A') then
         Fr = 1.d0
-    else if (n .EQV. 'b') then
+    else if ( cls == 'B') then
         Fr = 0.98d0
     else
         Fr = 0.95d0
@@ -218,9 +220,9 @@ S2 = b*Fr*(z/10)**p
         
     end subroutine
     
-    
-    subroutine Combinacao_carregamento_vento (h, a, b, ang_cobertura, pressao_vento, coef_max_succao, coef_min_succao)
-    
+    !***********************************************************************************************************************************
+    subroutine combinacao_carregamento_vento (h, a, b, ang_cobertura, pressao_vento, coef_max_succao, coef_min_succao)
+    !***********************************************************************************************************************************    
     real(8), intent(in) :: h                        ! comprimento da altura da coluna de sustentação + montante imediatamente acima / vista frontal
     real(8), intent(in) :: a                        ! maior dimensão da estrutura em vista superior
     real(8), intent(in) :: b                        ! menor dimensão da estrutura em vista superior
@@ -304,10 +306,142 @@ S2 = b*Fr*(z/10)**p
     end do
     
   
+   end subroutine
+    !*****************************************************************************************************************************
+    subroutine carga_distribuida_vento(Vo, S1, S2, C, barra, F)
+    !*****************************************************************************************************************************
+    real(8), intent(in) :: Vo
+    real(8), intent(in) :: S1                                        ! Fator topográfico S1
+    real(8), intent(in) :: S2                                        ! Fator topográfico S2
+    real(8), intent(in) :: C(2)                                      ! coeficiente com as combinações de Ce e Ci desejadas
+    type(barra_trelica), intent(in), allocatable :: barra(:)         ! vetor com dados geométricos e matriciais das barras da estrutura
+    real(8), intent(out) :: F(2)                                     ! Força do vento atuante na cobertura [KN/cm]
+    
+    !Variaveis internas ---------------
+
+    real(8) :: S3 = 1.d0      ! Fator topográfico S3
+    real(8) :: Vk             ! Velocidade do vento [cm/s]
+    real(8) :: q              ! Carga de vento na cobertura [KN/cm²]
+    
+    Vk = Vo*S1*S2*S3
+    q = (0.613d0*Vk**2)/(1000)
+    F(1) = q*C(1)*dist_trelica/100
+    F(1) = F(1)/100
+    F(2) = q*C(2)*dist_trelica/100
+    F(2) = F(2)/100
+    
     end subroutine
     
-    !subroutine carga_distribuida_vento(
+    !*****************************************************************************************************************************
+    subroutine carga_vento_sobrecarga_nos(theta, barra, F, cond_cont)
+    !*****************************************************************************************************************************
+    integer, intent(in) :: theta                           ! angulo de inclinação da cobertura
+    type(barra_trelica), intent(in) :: barra(:)            ! vetor com dados geométricos e matriciais das barras da estrutura
+    real(8), intent(in) :: F(2)                            ! Força do vento atuante na cobertura [KN/cm]
+    type(cond_contorno), intent(inout) :: cond_cont(:)     ! vetor com as condições de contorno de cada nó da estrutura
     
+    !Variaveis internas
+    real(8) :: forca_vento(2)
+    real(8) :: forca_sobrecarga
+    integer :: i=0, n=0
+    
+    forca_vento(1) = F(1)*barra(4)%comprimento
+    forca_vento(2) = F(2)*barra(4)%comprimento
+    
+    !Carga de vento ---------------------------------------------------------------------------------------------
+    do i = 1, num_nos/2
+        if (2*i == 2*(n_div+1)) then
+            cond_cont(2*i)%carga_vento(1) = forca_vento(1)*sin(theta*pi/180)/2 - forca_vento(2)*sin(theta*pi/180)/2
+            cond_cont(2*i)%carga_vento(2) = -forca_vento(1)*cos(theta*pi/180)/2 - forca_vento(2)*cos(theta*pi/180)/2
+            cycle
+        end if
+        if (2*i < 2*(n_div+1)) then
+            if (2*i==2) then
+                cond_cont(2*i)%carga_vento(1) = forca_vento(1)*sin(theta*pi/180)/2 
+                cond_cont(2*i)%carga_vento(2) = -forca_vento(1)*cos(theta*pi/180)/2
+                cycle
+            end if
+            cond_cont(2*i)%carga_vento(1) = forca_vento(1)*sin(theta*pi/180) 
+            cond_cont(2*i)%carga_vento(2) = -forca_vento(1)*cos(theta*pi/180) 
+        else if (2*i > 2*(n_div+1)) then
+            if (2*i == num_nos) then
+                cond_cont(2*i)%carga_vento(1) = - forca_vento(2)*sin(theta*pi/180)/2
+                cond_cont(2*i)%carga_vento(2) = - forca_vento(2)*cos(theta*pi/180)/2
+                cycle
+            end if
+            cond_cont(2*i)%carga_vento(1) = - forca_vento(2)*sin(theta*pi/180)
+            cond_cont(2*i)%carga_vento(2) = - forca_vento(2)*cos(theta*pi/180)
+        end if
+    end do
+    
+    !Carga de sobrecarga ---------------------------------------------------------
+    forca_sobrecarga = -(0.25/(cos(theta*pi/180)*10000))*barra(4)%comprimento*dist_trelica
+    
+    do i = 1, (num_nos-1)/2
+        if( 2*i == 2*(n_div+1)) then
+            cond_cont(2*i)%carga_sobrecarga(1) = 0.d0
+            cond_cont(2*i)%carga_sobrecarga(2) = 2*forca_sobrecarga*cos(theta*pi/180)/2
+        cycle
+        else if (2*i < 2*(n_div+1)) then
+            if (2*i == 2) then
+                cond_cont(2*i)%carga_sobrecarga(1) = -forca_sobrecarga*sin(theta*pi/180)/2
+                cond_cont(2*i)%carga_sobrecarga(2) = forca_sobrecarga*cos(theta*pi/180)/2
+                cond_cont(num_nos)%carga_sobrecarga(1) = -cond_cont(2*i)%carga_sobrecarga(1)
+                cond_cont(num_nos)%carga_sobrecarga(2) = cond_cont(2*i)%carga_sobrecarga(2)
+                cycle
+            end if
+            cond_cont(2*i)%carga_sobrecarga(1) = -forca_sobrecarga*sin(theta*pi/180)
+        else
+            cond_cont(2*i)%carga_sobrecarga(1) =  forca_sobrecarga*sin(theta*pi/180)
+        end if
+        
+    cond_cont(2*i)%carga_sobrecarga(2) =  forca_sobrecarga*cos(theta*pi/180)
+    end do 
+                    
+    end subroutine
+    
+    !*******************************************************************************************************
+    subroutine combina_acoes (cond_cont, comb_acao)
+    !*******************************************************************************************************
+    type(cond_contorno), intent(in), allocatable :: cond_cont(:)
+    type(comb_acoes), intent(out) :: comb_acao(5)
+    
+    !Variaveis internas -----------------
+    
+    integer :: i=0, n=0
+    
+    comb_acao(1)%nome = '1.25 PP + 1.5 SC'
+    comb_acao(2)%nome = '1.25 PP + 1.4 V'
+    comb_acao(3)%nome = '1.0 PP + 1.4 V'
+    comb_acao(4)%nome = '1.25 PP + 1.5 SC + 0.84V'
+    comb_acao(5)%nome = '1.25 PP + 1.4 V + 1.05 SC'
+    
+    allocate(comb_acao(1)%carga_nodal(num_nos))
+    allocate(comb_acao(2)%carga_nodal(num_nos))
+    allocate(comb_acao(3)%carga_nodal(num_nos))
+    allocate(comb_acao(4)%carga_nodal(num_nos))
+    allocate(comb_acao(5)%carga_nodal(num_nos))
+    
+    ! Combinação (1)
+    comb_acao(1)%carga_nodal(:)%x = 1.25*(cond_cont(:)%carga_pp(1) + cond_cont(:)%carga_telha_telhado(1)) + 1.5*cond_cont(:)%carga_sobrecarga(1)
+    comb_acao(1)%carga_nodal(:)%y = 1.25*(cond_cont(:)%carga_pp(2) + cond_cont(:)%carga_telha_telhado(2)) + 1.5*cond_cont(:)%carga_sobrecarga(2)
+ 
+    ! Combinação (2)
+    comb_acao(2)%carga_nodal(:)%x = 1.25*(cond_cont(:)%carga_pp(1) + cond_cont(:)%carga_telha_telhado(1)) + 1.4*cond_cont(:)%carga_vento(1)
+    comb_acao(2)%carga_nodal(:)%y = 1.25*(cond_cont(:)%carga_pp(2) + cond_cont(:)%carga_telha_telhado(2)) + 1.4*cond_cont(:)%carga_vento(2)
+    
+    ! Combinação (3)
+    comb_acao(3)%carga_nodal(:)%x = 1.00*(cond_cont(:)%carga_pp(1) + cond_cont(:)%carga_telha_telhado(1)) + 1.4*cond_cont(:)%carga_vento(1)
+    comb_acao(3)%carga_nodal(:)%y = 1.00*(cond_cont(:)%carga_pp(2) + cond_cont(:)%carga_telha_telhado(2)) + 1.4*cond_cont(:)%carga_vento(2)
+    
+    ! Combinação (4)
+    comb_acao(4)%carga_nodal(:)%x = 1.25*(cond_cont(:)%carga_pp(1) + cond_cont(:)%carga_telha_telhado(1)) + 1.5*cond_cont(:)%carga_sobrecarga(1) + 0.84*cond_cont(:)%carga_vento(1)
+    comb_acao(4)%carga_nodal(:)%y = 1.25*(cond_cont(:)%carga_pp(2) + cond_cont(:)%carga_telha_telhado(2)) + 1.5*cond_cont(:)%carga_sobrecarga(2) + 0.84*cond_cont(:)%carga_vento(2)
+    
+    ! Combinação (5)
+    comb_acao(5)%carga_nodal(:)%x = 1.25*(cond_cont(:)%carga_pp(1) + cond_cont(:)%carga_telha_telhado(1)) + 1.4*cond_cont(:)%carga_vento(1) + 1.05*cond_cont(:)%carga_sobrecarga(1)
+    comb_acao(5)%carga_nodal(:)%y = 1.25*(cond_cont(:)%carga_pp(2) + cond_cont(:)%carga_telha_telhado(2)) + 1.4*cond_cont(:)%carga_vento(2) + 1.05*cond_cont(:)%carga_sobrecarga(2)
+    end subroutine
     
     
     

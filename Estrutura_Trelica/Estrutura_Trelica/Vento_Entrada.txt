@@ -34,3 +34,9 @@ h1 = 400
 dist_trelica = 600
 n_div = 3
 /
+
+&Comb_acoes
+
+
+
+/
