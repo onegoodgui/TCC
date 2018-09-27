@@ -346,64 +346,64 @@ module Estrutura_Trelica
     end subroutine
     
         !***************************************************************************************************************************************    
-        subroutine secao_barras(n_cant, cant, n_barras, barra)
+        !subroutine secao_barras(n_cant, cant, n_barras, barra)
         !***************************************************************************************************************************************        
-        integer, intent(in) :: n_cant                                ! número de cantoneiras de abas iguais, de acordo com a tabela da AISC de novembro de 2017
-        type(LLS_var), intent(in), allocatable :: cant(:)            ! variável com os dados geométricos de cantoneiras simples de lados iguais
-        integer, intent(in) :: n_barras                              ! número de barras da estrutura treliçada
-        type(barra_trelica), intent(inout), allocatable :: barra(:)  ! vetor com dados geométricos e matriciais das barras da estrutura
+        !integer, intent(in) :: n_cant                                ! número de cantoneiras de abas iguais, de acordo com a tabela da AISC de novembro de 2017
+        !type(LLS_var), intent(in), allocatable :: cant(:)            ! variável com os dados geométricos de cantoneiras simples de lados iguais
+        !integer, intent(in) :: n_barras                              ! número de barras da estrutura treliçada
+        !type(barra_trelica), intent(inout), allocatable :: barra(:)  ! vetor com dados geométricos e matriciais das barras da estrutura
         
-        integer :: i = 0
+        !integer :: i = 0
         
         
         ! agrupamento das barras da estrutura reticulada em banzo inferior, banzo superior, montante e diagonal
           
-        integer, allocatable :: i_banzo_superior(:)                  ! armazena os numeros que indicam barras que pertencem ao banzo superior
-        integer, allocatable :: i_banzo_inferior(:)                  ! armazena os numeros que indicam barras que pertencem ao banzo inferior
-        integer, allocatable :: i_diagonal(:)                        ! armazena os numeros que indicam barras que pertencem à diagonal
-        integer, allocatable :: i_montante(:)                        ! armazena os numeros que indicam barras que pertencem ao montante
-        character(20), allocatable :: nome_cant_trelica(:)
+        !integer, allocatable :: i_banzo_superior(:)                  ! armazena os numeros que indicam barras que pertencem ao banzo superior
+        !integer, allocatable :: i_banzo_inferior(:)                  ! armazena os numeros que indicam barras que pertencem ao banzo inferior
+        !integer, allocatable :: i_diagonal(:)                        ! armazena os numeros que indicam barras que pertencem à diagonal
+        !integer, allocatable :: i_montante(:)                        ! armazena os numeros que indicam barras que pertencem ao montante
+        !character(20), allocatable :: nome_cant_trelica(:)
         
-         allocate(nome_cant_trelica(n_barras))
+        ! allocate(nome_cant_trelica(n_barras))
            
-        if(h1>0) then
+        !if(h1>0) then
             
-            allocate(i_banzo_superior(2*n_div))
-            allocate(i_montante(2*n_div+1))
-            allocate(i_diagonal(2*n_div))
-            allocate(i_banzo_inferior(2*n_div))
+        !    allocate(i_banzo_superior(2*n_div))
+        !    allocate(i_montante(2*n_div+1))
+        !    allocate(i_diagonal(2*n_div))
+        !   allocate(i_banzo_inferior(2*n_div))
             
-            i_montante(1) = 1
-            i_banzo_inferior(1)= 2
-            i_diagonal(1) = 3
-            i_banzo_superior(1) = 4
+        !    i_montante(1) = 1
+        !    i_banzo_inferior(1)= 2
+        !    i_diagonal(1) = 3
+        !    i_banzo_superior(1) = 4
             
-            do i = 1, 2*n_div-1
+        !    do i = 1, 2*n_div-1
                 
-                i_montante(i+1) = i_montante(i) + 4
-                i_banzo_inferior(i+1) = i_banzo_inferior(i) + 4
-                i_diagonal(i+1) = i_diagonal(i) + 4
-                i_banzo_superior(i+1) = i_banzo_superior(i) + 4
+        !        i_montante(i+1) = i_montante(i) + 4
+        !        i_banzo_inferior(i+1) = i_banzo_inferior(i) + 4
+        !        i_diagonal(i+1) = i_diagonal(i) + 4
+        !        i_banzo_superior(i+1) = i_banzo_superior(i) + 4
             
-            end do
-                i_montante(i+1) = i_montante(i) + 4
+        !    end do
+        !        i_montante(i+1) = i_montante(i) + 4
                 
-                nome_cant_trelica(1:n_barras) = ' '
-                nome_cant_trelica(i_banzo_superior) = cant(1)%name
-                nome_cant_trelica(i_banzo_inferior) = cant(1)%name
-                nome_cant_trelica(i_diagonal) = cant(1)%name
-                nome_cant_trelica(i_montante) = cant(1)%name
+        !        nome_cant_trelica(1:n_barras) = ' '
+        !        nome_cant_trelica(i_banzo_superior) = cant(20)%name
+        !        nome_cant_trelica(i_banzo_inferior) = cant(20)%name
+        !        nome_cant_trelica(i_diagonal) = cant(20)%name
+        !        nome_cant_trelica(i_montante) = cant(20)%name
                 
-                do i = 1, n_barras
-                    barra(i)%s%secao = LLS_propriedades_cantoneira_lista(n_cant, cant, nome_cant_trelica(i))
-                    call LLS_propriedades_geometricas (barra(i)%s%secao)
-                    call LLSt_propriedades_geometricas (barra(i)%s)
-                end do
-        else
+        !       do i = 1, n_barras
+        !            barra(i)%s%secao = LLS_propriedades_cantoneira_lista(n_cant, cant, nome_cant_trelica(i))
+        !            call LLS_propriedades_geometricas (barra(i)%s%secao)
+         !           call LLSt_propriedades_geometricas (barra(i)%s)
+         !       end do
+        !else
                 
                 
-        end if
-        end subroutine
+        !end if
+        !end subroutine
         
         !********************************************************************************************************************
         subroutine carga_pp_barras (rho, h1, n_div, num_nos, n_barras, barra, cond_cont)

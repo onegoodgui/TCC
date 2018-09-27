@@ -47,14 +47,23 @@
     namelist /Dados_geometricos/ L, h1, dist_trelica, n_div    ! namelist com os valores de entrada referentes às imposições geométricas da estrutura
     !Variables Combinação de ações --------------------------------------------------------------------------------------------------
     type(comb_acoes) :: comb_acao(5)
+    !Variables Resistência
+    real(8), allocatable :: Nrd(:)                   ! Força resistente de calculo das barras de treliça [KN] 
     !Variables Otimização
+    integer :: caso_vento = 0                           !0 = pressão negativa máxima; 1 = pressão positiva máxima
+    real(8) :: coeficiente_pp = 1.4d0                   ! coeficiente de ponderação da carga decorrente do peso próprio          
+    real(8) :: coeficiente_cobertura = 1.4d0            ! coeficiente de ponderação da carga decorrente da cobertura          
+    real(8) :: coeficiente_sobrecarga = 0.d0            ! coeficiente de ponderação da carga decorrente da sobrecarga       
+    real(8) :: coeficiente_vento = 1.0d0                ! coeficiente de ponderação da carga decorrente do vento    
+    real(8) :: peso_total
+    real(8) :: dc
     
-    
-    integer, parameter :: uni_dad_vento = 100                     ! nome dado para número que identifica arquivo externo
-    integer :: i                                                  ! variavel de recurso cíclico
-    integer :: n                                                  ! variável de recurso cíclico 
+    integer, parameter :: uni_dad_vento = 100           ! nome dado para número que identifica arquivo externo
+    integer :: i                                        ! variavel de recurso cíclico
+    integer :: n                                        ! variável de recurso cíclico 
     integer :: junk1
     character :: junk2
+    
     
     contains
     
@@ -69,7 +78,7 @@
     real(8), intent(in), allocatable :: forca_axial(:)              ! Esforço axial nas barras de treliça [KN]
     real(8) :: Ncrd(n_barras)                                       ! Força de compressão resistente de calculo das barras de treliça [KN]
     real(8) :: Ntrd(n_barras)                                       ! Força de tração resistente de calculo das barras de treliça [KN]
-    real(8), intent(out), allocatable :: Nrd(:,:)                   ! Força resistente de calculo das barras de treliça [KN] 
+    real(8), intent(out), allocatable :: Nrd(:)                   ! Força resistente de calculo das barras de treliça [KN] 
 
     
     ! Variáveis internas ------------------
@@ -77,42 +86,96 @@
     integer :: ii = 0
     
     
-    allocate(Nrd(6, n_barras))
+    allocate(Nrd(n_barras))
     
  ! trecho do programa que calcula os esforços normais de compressão e tração para a carga externa descendente
  !***********************************************************************************************************
-    do i = 1, 6
+    
         do n = 1, n_barras
-            if(forca_axial(i)>=0) then
+            if(forca_axial(n)>=0) then
                 Ntrd(n) =  barra(n)%s%A*fy/1.1d0
-                Nrd(i,n) = Ntrd(n)
+                Nrd(n) = Ntrd(n)
             else
                 call LLSt_NcRd (barra(n)%s, E, G, fy, barra(n)%comprimento, barra(n)%comprimento, barra(n)%comprimento, NcRd(n))
-                Nrd(i,n) = Ncrd(n)
+                Nrd(n) = Ncrd(n)
             end if
         end do
-    end do
+
  
     end subroutine
     
     !**********************************************************************************************************************************
     subroutine funcao_objetivo(nd, nc, Vd, Vc, fob)
     !**********************************************************************************************************************************
+    
         integer, intent(in) :: nd                          ! numero de variaveis diescretas
         integer, intent(in) :: nc                          ! numero de variaveis continuas
         integer, intent(in) :: Vd(nd)                      ! valor das variaveis discretas
         real(8), intent(in) :: Vc(nc)                      ! valor das variaveis continuas
         real(8) :: fob                                     ! função objetivo
-        real(8), allocatable :: Nrd(:,:)                   ! Força resistente de calculo das barras de treliça [KN] 
-    
+        real(8) :: func_penal                           ! função penalidade
+        real(8) :: g1                                   ! inequação de restrição quanto aos esforços axiais
+        real(8) :: g1_aux(13)
+        real(8) :: g2                                   ! inequação de restrição quanto ao indice de esbeltez das barras
+        real(8) :: g2_aux(13)
+        real(8) :: g3                                   ! inequação de restrição quanto ao deslocamento da estrutura
+        real(8) :: g3_aux
+        real(8) :: c = 1                                   ! coeficiente da função de penalização
+        integer, allocatable :: i_banzo_superior(:)                  ! armazena os numeros que indicam barras que pertencem ao banzo superior
+        integer, allocatable :: i_banzo_inferior(:)                  ! armazena os numeros que indicam barras que pertencem ao banzo inferior
+        integer, allocatable :: i_diagonal(:)                        ! armazena os numeros que indicam barras que pertencem à diagonal
+        integer, allocatable :: i_montante(:)                        ! armazena os numeros que indicam barras que pertencem ao montante
+        character(20), allocatable :: nome_cant_trelica(:)
+        
+        
+        !Corpo da subrotina----------------------------------------------------------------------------
+        
         !Atribui coordenadas para os nós da estrutura
             call node_barras(n_div, h1, num_nos, coord)
             
-        !Estabelece o número de barras e suas conectividades
+        !Estabelece o número de barras, conectividades e seus comprimentos
             call barras_trelica (n_div, h1, coord, n_barras, barra)
             
         !Atribui uma seção transversal para cada barra de acordo com a lista de seções da AISC
-            call secao_barras(n_cant, cant, n_barras, barra)
+            allocate(nome_cant_trelica(n_barras))
+           
+        if(h1>0) then
+            
+            allocate(i_banzo_superior(2*n_div))
+            allocate(i_montante(2*n_div+1))
+            allocate(i_diagonal(2*n_div))
+            allocate(i_banzo_inferior(2*n_div))
+            
+            i_montante(1) = 1
+            i_banzo_inferior(1)= 2
+            i_diagonal(1) = 3
+            i_banzo_superior(1) = 4
+            
+            do i = 1, 2*n_div-1
+                
+                i_montante(i+1) = i_montante(i) + 4
+                i_banzo_inferior(i+1) = i_banzo_inferior(i) + 4
+                i_diagonal(i+1) = i_diagonal(i) + 4
+                i_banzo_superior(i+1) = i_banzo_superior(i) + 4
+            
+            end do
+                i_montante(i+1) = i_montante(i) + 4
+                
+                nome_cant_trelica(1:n_barras) = ' '
+                nome_cant_trelica(i_banzo_superior) = cant(20)%name
+                nome_cant_trelica(i_banzo_inferior) = cant(20)%name
+                nome_cant_trelica(i_diagonal) = cant(20)%name
+                nome_cant_trelica(i_montante) = cant(20)%name
+                
+                do i = 1, n_barras
+                    barra(i)%s%secao = LLS_propriedades_cantoneira_lista(n_cant, cant, nome_cant_trelica(i))
+                    call LLS_propriedades_geometricas (barra(i)%s%secao)
+                    call LLSt_propriedades_geometricas (barra(i)%s)
+                end do
+        else
+                
+                
+        end if
     
         !Calcula a a magnitude de carga de peso próprio em cada nó da estrutura
             call carga_pp_barras (rho, h1, n_div, num_nos, n_barras, barra, cond_cont)
@@ -126,22 +189,23 @@
         !Combina os valores de Ce e Ci e guarda as combinações com o valor máx e min de succão
             call combinacao_carregamento_vento (h, a, b, ang_cobertura, pressao_vento, coef_max_succao, coef_min_succao)
     
-        !Calcula a carga distribuída na cobertura devido à ação do vento
-           ! select case(coeficiente_vento)
-           !     case(0)
-           !         call carga_distribuida_vento(Vo, S1, S2, coef_max_succao, barra, F)
-           !     case(1)
-           !         call carga_distribuida_vento(Vo, S1, S2, coef_min_succao, barra, F)
-           ! end case
+        !Calcula a carga distribuída na cobertura devido à ação do vento // 0 = pressão negativa máxima; 1 = pressão positiva máxima
+            select case(caso_vento)
+                case(0)
+                    call carga_distribuida_vento(Vo, S1, S2, coef_max_succao, barra, F)
+                case(1)
+                    call carga_distribuida_vento(Vo, S1, S2, coef_min_succao, barra, F)
+            end select
         !Calcula as cargas nodais da ação do vento na estrutura
             call carga_vento_sobrecarga_nos(theta, barra, F, cond_cont)
     
-        !Calcula as combinações de ações para Combinações Últimas Normais 
-            call combina_acoes (cond_cont, comb_acao)
-    
+            allocate(v_glc(nglc))
+            call vetor_vglc (cond_cont, v_glc)
         !Matriz de rigidez - vetor de deslocamentos fixos e livres / vetor de cargas
-            !if (coeficiente_vento == 0) then
-            !call vetor_Y_vglc (comb_, Y, v_glc)
+            allocate(Y(num_nos*ngln,1))
+            do i=1, num_nos
+                call vetor_Y (i, cond_cont(i), coeficiente_pp*cond_cont(i)%carga_pp, coeficiente_cobertura*cond_cont(i)%carga_telha_telhado, coeficiente_sobrecarga*cond_cont(i)%carga_sobrecarga, coeficiente_vento*cond_cont(i)%carga_vento, Y)
+            end do
             
             allocate(MatRigid(ngln*num_nos,ngln*num_nos))
             MatRigid = 0.d0
@@ -159,6 +223,68 @@
             call forca_axial_barras(barra, n_barras, deslocamentos, forca_axial)
             call analise_resistencia_axial(barra, fy, E, G, forca_axial, Nrd)
             
+            !-----------Peso total da estrutura!-------------------!
+            peso_total = SUM(barra(:)%peso)
+            
+            !------------Deslocamento máximo da estrutura!-----------!
+            dc = maxval(abs(deslocamentos(:,1)))
+            
+            
+            !-------------trecho em que se calcula a penalidade da restrição com relação aos esforços - g1-------------------!
+ 
+            g1 = 1.d0
+            
+            do i=1, n_barras
+        
+                g1_aux(i) = ABS(forca_axial(i))/ABS(Nrd(i)) - 1.d0     
+     
+                if(g1_aux(i) > 0) then
+                    g1 = g1 + g1_aux(i)
+                end if
+      
+            end do
+
+    
+            !trecho em que se calcula a penalidade da restrição com relação a esbeltez das barras - g2
+!****************************************************************************************************    
+            g2 = 1.d0
+    
+            do i=1, n_barras
+                g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 200.d0
+        
+                if(g2_aux(i) > 0) then
+                    g2 = g2 + g2_aux(i)
+                end if
+        
+                g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 300.d0
+                
+                if(g2_aux(i) > 0) then
+                    g2 = g2 + g2_aux(i)
+                end if
+        
+            end do
+
+    
+            !trecho em que se calcula a penalidade da restrição com relação aos deslocamentos da barra - g3
+!****************************************************************************************************     
+        
+            g3 = 1
+            g3_aux = ABS(dc)/(L/250.d0) - 1.d0
+    
+            if(g3_aux > 0) then
+                g3 = g3 + g3_aux
+            end if
+    
+    
+     func_penal = 0
+     
+     if(g1 > 1.d0) func_penal = func_penal + c*g1**2
+     
+     if(g2 > 1.d0) func_penal = func_penal + c*g2**2
+     
+     if(g3 > 1.d0) func_penal = func_penal + c*g3**2
+    
+     fob = peso_total + func_penal
     end subroutine
     
     end module

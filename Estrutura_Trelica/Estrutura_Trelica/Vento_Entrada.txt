@@ -23,14 +23,14 @@ Vo = 45
 
 h = 5
 a = 30
-b = 20 
+b = 18 
 ang_cobertura = 15
 /
 
 &Dados_geometricos
 
 L = 1800
-h1 = 400
+h1 = 100
 dist_trelica = 600
 n_div = 3
 /
