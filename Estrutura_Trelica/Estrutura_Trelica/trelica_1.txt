@@ -9,12 +9,12 @@ ffop =
 
 param%nvD = 4
 param%nvC = 0
-param%Li_vd = 4*1
-param%Ls_vd = 4*33
+param%Li_vd = 4*44
+param%Ls_vd = 4*44
 param%Li_vc = 0
 param%Ls_vc = 0
 
-param%maxIT = 3000
+param%maxIT = 4000
 param%maxAF = 2000
 
 param%verificar_parametros = .false.

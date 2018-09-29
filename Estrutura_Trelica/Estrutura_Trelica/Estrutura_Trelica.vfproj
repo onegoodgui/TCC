@@ -31,6 +31,7 @@
 		<File RelativePath="..\..\Carga_de_Vento\Carga_de_Vento\Carga_de_Vento.f90"/>
 		<File RelativePath=".\Estrutura_Trelica.f90"/>
 		<File RelativePath="..\..\..\otimização - analise 1\HSAg.f90"/>
+		<File RelativePath="..\..\..\otimização - analise 1\LLScross.f90"/>
 		<File RelativePath="..\..\..\otimização - analise 1\LLSt.f90"/>
 		<File RelativePath="..\..\..\MatrizRigidez\Mat_Rigidez.f90"/>
 		<File RelativePath="..\..\..\otimização - analise 1\new_LLS.f90"/>

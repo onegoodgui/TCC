@@ -3,15 +3,18 @@
     use Matriz_Rigidez
     use CargaVento
     use Estrutura_Trelica
+    use LLS
+    use LLScross
+    use LLSt
     
     implicit none
     
     ! Variaveis ---------------------------------------------------------------------------------------------------------------------
-    integer :: iii
     integer, parameter :: uni_dad_estrut = 150, uni_entrada = 300, uni_dad_tercas = 500
     !Variaveis LLS -----------------------------------------------------------------------------------------------------------------
     integer :: n_cant
     type(LLS_var), allocatable :: cant(:)
+
     !Variaveis barra ---------------------------------------------------------------------------------------------------------------
     integer :: n_barras
     !integer :: num_nos
@@ -57,6 +60,9 @@
     real(8) :: coeficiente_vento = 1.0d0                ! coeficiente de ponderação da carga decorrente do vento    
     real(8) :: peso_total
     real(8) :: dc
+    type(barra_trelica), allocatable :: barra(:)
+    real(8), allocatable :: deslocamentos(:,:)
+    real(8), allocatable :: forca_axial(:)
     
     integer, parameter :: uni_dad_vento = 100           ! nome dado para número que identifica arquivo externo
     integer :: i                                        ! variavel de recurso cíclico
@@ -161,16 +167,27 @@
             end do
                 i_montante(i+1) = i_montante(i) + 4
                 
+                barra(i_banzo_superior)%tipo = "2L"
+                barra(i_banzo_inferior)%tipo = "2L"
+                barra(i_diagonal)%tipo = "2L_cruz"
+                barra(i_montante)%tipo = "2L_cruz"
+                
                 nome_cant_trelica(1:n_barras) = ' '
-                nome_cant_trelica(i_banzo_superior) = cant(20)%name
-                nome_cant_trelica(i_banzo_inferior) = cant(20)%name
-                nome_cant_trelica(i_diagonal) = cant(20)%name
-                nome_cant_trelica(i_montante) = cant(20)%name
+                nome_cant_trelica(i_banzo_superior) = cant(Vd(1))%name
+                nome_cant_trelica(i_banzo_inferior) = cant(Vd(2))%name
+                nome_cant_trelica(i_diagonal) = cant(Vd(3))%name
+                nome_cant_trelica(i_montante) = cant(Vd(4))%name
                 
                 do i = 1, n_barras
                     barra(i)%s%secao = LLS_propriedades_cantoneira_lista(n_cant, cant, nome_cant_trelica(i))
                     call LLS_propriedades_geometricas (barra(i)%s%secao)
-                    call LLSt_propriedades_geometricas (barra(i)%s)
+                    if(barra(i)%tipo == "2L") then
+                        call LLSt_propriedades_geometricas (barra(i)%s)
+                    else if (barra(i)%tipo == "2L_cruz") then
+                        call LLScross_propriedades_geometricas (barra(i)%s)
+                    else
+                       cycle
+                    end if
                 end do
         else
                 

@@ -1,6 +1,7 @@
 module Estrutura_Trelica
 
     use LLSt
+    use LLScross
     use sislin_pbMEF
     ! módulo para calculo dos esforços numa estrutura de treliça trapezoidal/triangular, de número de
     implicit none
@@ -37,6 +38,7 @@ module Estrutura_Trelica
         real(8) :: comprimento        ! [cm]
         type(LLSt_var) :: s
         real(8) :: peso
+        character(7) :: tipo
     end type
         
     
@@ -54,7 +56,8 @@ module Estrutura_Trelica
     integer :: num_nos
     type(node) :: coord
     type(cond_contorno), allocatable :: cond_cont(:)
-    type(barra_trelica), allocatable :: barra(:)
+
+    
     type(terca_list), allocatable :: terca(:)
     
   
