@@ -55,7 +55,7 @@ module Estrutura_Trelica
     integer :: theta                                           ! numero total de nós da estrutura
     integer :: num_nos
     type(node) :: coord
-    type(cond_contorno), allocatable :: cond_cont(:)
+    
 
     
     type(terca_list), allocatable :: terca(:)
@@ -438,7 +438,11 @@ module Estrutura_Trelica
             
             ! Atribuição de peso a cada barra
             do i = 1, n_barras
-                barra(i)%peso = rho*barra(i)%s%A*barra(i)%comprimento
+                if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then
+                    barra(i)%peso = rho*barra(i)%s%A*barra(i)%comprimento
+                else
+                    barra(i)%peso = rho*barra(i)%s%secao%A*barra(i)%comprimento
+                end if
             end do
             
             do i = 1, n_barras

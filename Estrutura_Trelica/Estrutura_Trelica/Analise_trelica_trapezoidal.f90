@@ -19,9 +19,9 @@
     integer :: n_barras
     !integer :: num_nos
     real(8) :: rho = 0.000078d0                     ! Massa específica do aço [KN/cm³]
-    real(8) :: fy = 0.25d0                          ! tensão de escoamento do aço [KN/mm^2)
+    real(8) :: fy = 25.d0                          ! tensão de escoamento do aço [KN/mm^2)
     !real(8) :: E = 200.d0                           ! Módulo de elasticidade do aço
-    real(8) :: G = 77.d0                            ! modulo de elasticidade transversal do aço [KN/mm^2]
+    real(8) :: G = 7700.d0                            ! modulo de elasticidade transversal do aço [KN/cm^2]
     ! Variables S1-------------------------------------------------------------------------------------------------------------------
     character(4) :: caso                            ! a) Terreno plano ou fracamente acidentado; b) Taludes e morros; c) Vales profundos
     !integer :: theta                               ! Inclinação média do talude ou enconsta de morro
@@ -61,6 +61,7 @@
     real(8) :: peso_total
     real(8) :: dc
     type(barra_trelica), allocatable :: barra(:)
+    type(cond_contorno), allocatable :: cond_cont(:)
     real(8), allocatable :: deslocamentos(:,:)
     real(8), allocatable :: forca_axial(:)
     
@@ -99,10 +100,21 @@
     
         do n = 1, n_barras
             if(forca_axial(n)>=0) then
-                Ntrd(n) =  barra(n)%s%A*fy/1.1d0
+                if(barra(n)%tipo == "2L" .OR. barra(n)%tipo == "2L_cruz") then
+                    Ntrd(n) =  barra(n)%s%A*fy/1.1d0
+                else
+                    Ntrd(n) =  barra(n)%s%secao%A*fy/1.1d0
+                end if
                 Nrd(n) = Ntrd(n)
-            else
+                cycle
+            else if(barra(n)%tipo == "2L") then
                 call LLSt_NcRd (barra(n)%s, E, G, fy, barra(n)%comprimento, barra(n)%comprimento, barra(n)%comprimento, NcRd(n))
+                Nrd(n) = Ncrd(n)
+            else if (barra(n)%tipo == "2L_cruz") then
+                call LLScross_NcRd (barra(n)%s, E, G, fy, barra(n)%comprimento, barra(n)%comprimento, barra(n)%comprimento, NcRd(n))
+                Nrd(n) = Ncrd(n)
+            else if (barra(n)%tipo == "L") then
+                call LLS_NcRd (barra(n)%s%secao, E, G, fy, barra(n)%comprimento, barra(n)%comprimento, barra(n)%comprimento, NcRd(n))
                 Nrd(n) = Ncrd(n)
             end if
         end do
@@ -170,7 +182,7 @@
                 barra(i_banzo_superior)%tipo = "2L"
                 barra(i_banzo_inferior)%tipo = "2L"
                 barra(i_diagonal)%tipo = "2L_cruz"
-                barra(i_montante)%tipo = "2L_cruz"
+                barra(i_montante)%tipo = "L"
                 
                 nome_cant_trelica(1:n_barras) = ' '
                 nome_cant_trelica(i_banzo_superior) = cant(Vd(1))%name
@@ -228,7 +240,11 @@
             MatRigid = 0.d0
     
             do i =1, n_barras
-                call matriz_rigidez_local(barra(i)%s%A, E, barra(i)%comprimento, k_local)
+                if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then
+                    call matriz_rigidez_local(barra(i)%s%A, E, barra(i)%comprimento, k_local)
+                else
+                    call matriz_rigidez_local(barra(i)%s%secao%A, E, barra(i)%comprimento, k_local)
+                end if
                 call matriz_trasformacao(barra(i)%node(1)%x,barra(i)%node(1)%y, barra(i)%node(2)%x,barra(i)%node(2)%y, barra(i)%comprimento, T)
                 call matriz_rigidez_global(k_local, T, k)
                 call matriz_rigidez_estrutura(barra(i)%conectividades(1), barra(i)%conectividades(2), k, MatRigid)
@@ -267,13 +283,20 @@
             g2 = 1.d0
     
             do i=1, n_barras
-                g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 200.d0
-        
+                if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then
+                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 200.d0
+                else
+                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%secao%r_min - 200.d0
+                end if
+                
                 if(g2_aux(i) > 0) then
                     g2 = g2 + g2_aux(i)
                 end if
-        
-                g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 300.d0
+                if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then  
+                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 300.d0
+                else
+                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%secao%r_min - 300.d0
+                end if
                 
                 if(g2_aux(i) > 0) then
                     g2 = g2 + g2_aux(i)
