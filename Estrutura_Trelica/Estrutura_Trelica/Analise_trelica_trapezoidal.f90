@@ -18,46 +18,46 @@
     !Variaveis barra ---------------------------------------------------------------------------------------------------------------
     integer :: n_barras
     !integer :: num_nos
-    real(8) :: rho = 0.000078d0                     ! Massa específica do aço [KN/cm³]
-    real(8) :: fy = 25.d0                          ! tensão de escoamento do aço [KN/mm^2)
-    !real(8) :: E = 200.d0                           ! Módulo de elasticidade do aço
-    real(8) :: G = 7700.d0                            ! modulo de elasticidade transversal do aço [KN/cm^2]
+    real(8) :: rho = 0.000078d0                                ! Massa específica do aço [KN/cm³]
+    real(8) :: fy = 25.d0                                      ! tensão de escoamento do aço [KN/mm^2)
+    !real(8) :: E = 200.d0                                     ! Módulo de elasticidade do aço
+    real(8) :: G = 7700.d0                                     ! modulo de elasticidade transversal do aço [KN/cm^2]
     ! Variables S1-------------------------------------------------------------------------------------------------------------------
-    character(4) :: caso                            ! a) Terreno plano ou fracamente acidentado; b) Taludes e morros; c) Vales profundos
-    !integer :: theta                               ! Inclinação média do talude ou enconsta de morro
-    real(8) :: z                                    ! Altura medida a partir da superfície do terreno no ponto considerado
-    real(8) :: d                                    ! diferença de nível entre a base e o topo do talude ou morro
-    namelist /Fator_Top_S1/ caso, theta, z, d       ! namelist com dados de entrada para avaliar o fator  topográfico S1
+    character(4) :: caso                                       ! a) Terreno plano ou fracamente acidentado; b) Taludes e morros; c) Vales profundos
+    !integer :: theta                                          ! Inclinação média do talude ou enconsta de morro
+    real(8) :: z                                               ! Altura medida a partir da superfície do terreno no ponto considerado
+    real(8) :: d                                               ! diferença de nível entre a base e o topo do talude ou morro
+    namelist /Fator_Top_S1/ caso, theta, z, d                  ! namelist com dados de entrada para avaliar o fator  topográfico S1
     ! Variables S2-------------------------------------------------------------------------------------------------------------------   
-    character :: cat                                ! categoria referente ao fator S2
-    character :: cls                                ! classe referente ao fator S2
-    namelist /Fator_Top_S2/ cat, cls                ! namelist com dados de entrada para avaliar o fator  topográfico S2
-    type(tabela_S2) :: tab_S2(5)                    ! vetor de armazenamento dos dados da tabela numérica do fator S2
+    character(2) :: cat                                        ! categoria referente ao fator S2
+    character :: cls                                           ! classe referente ao fator S2
+    namelist /Fator_Top_S2/ cat, cls                           ! namelist com dados de entrada para avaliar o fator  topográfico S2
+    type(tabela_S2) :: tab_S2(5)                               ! vetor de armazenamento dos dados da tabela numérica do fator S2
      ! Variables pressão dinâmica----------------------------------------------------------------------------------------------------
-    real(8) :: Vo                                   ! Velocidade característica do vento da região, em m/s
-    namelist /pressao_dinamica/ Vo                  ! namelist com os dados de entrada para avaliar a pressão dinâmica
+    real(8) :: Vo                                              ! Velocidade característica do vento da região, em m/s
+    namelist /pressao_dinamica/ Vo                             ! namelist com os dados de entrada para avaliar a pressão dinâmica
     ! Variables Coef. pressão--------------------------------------------------------------------------------------------------------
-    real(8) :: h                                    ! comprimento da altura da coluna de sustentação + montante imediatamente acima / vista frontal
-    real(8) :: b                                    ! menor dimensão da estrutura em vista superior
-    real(8) :: a                                    ! maior dimensão da estrutura em vista superior
-    integer :: ang_cobertura                        ! inclinação da viga de cobertura treliçada entre montante externo e intermediário
-    namelist /Cofc_pressao/ h, a, b, ang_cobertura  ! namelist com os valores de entrada para avaliar Ce e Cpe
+    real(8) :: h                                               ! comprimento da altura da coluna de sustentação + montante imediatamente acima / vista frontal
+    real(8) :: b                                               ! menor dimensão da estrutura em vista superior
+    real(8) :: a                                               ! maior dimensão da estrutura em vista superior
+    integer :: ang_cobertura                                   ! inclinação da viga de cobertura treliçada entre montante externo e intermediário
+    namelist /Cofc_pressao/ h, a, b, ang_cobertura             ! namelist com os valores de entrada para avaliar Ce e Cpe
     !Variables Pressão Vento---------------------------------------------------------------------------------------------------------
-    type(Coef_pressao) :: pressao_vento(3)            ! Variável de armazenamento dos coeficientes Ce e Cpe
-    real(8) :: coef_min_succao(2), coef_max_succao(2) ! Ce + Ci
-    real(8) :: F(2)                                   ! Carga distribuida do vento
+    type(Coef_pressao) :: pressao_vento(3)                     ! Variável de armazenamento dos coeficientes Ce e Cpe
+    real(8) :: coef_min_succao(2), coef_max_succao(2)          ! Ce + Ci
+    real(8) :: F(2)                                            ! Carga distribuida do vento
     !Variables Dados Geométricos ----------------------------------------------------------------------------------------------------
-    namelist /Dados_geometricos/ L, h1, dist_trelica, n_div    ! namelist com os valores de entrada referentes às imposições geométricas da estrutura
+    namelist /Dados_geometricos/ L, h1, dist_trelica, n_div, inclinacao_diagonais    ! namelist com os valores de entrada referentes às imposições geométricas da estrutura
     !Variables Combinação de ações --------------------------------------------------------------------------------------------------
     type(comb_acoes) :: comb_acao(5)
     !Variables Resistência
-    real(8), allocatable :: Nrd(:)                   ! Força resistente de calculo das barras de treliça [KN] 
+    real(8), allocatable :: Nrd(:)                              ! Força resistente de calculo das barras de treliça [KN] 
     !Variables Otimização
-    integer :: caso_vento = 0                           !0 = pressão negativa máxima; 1 = pressão positiva máxima
-    real(8) :: coeficiente_pp = 1.4d0                   ! coeficiente de ponderação da carga decorrente do peso próprio          
-    real(8) :: coeficiente_cobertura = 1.4d0            ! coeficiente de ponderação da carga decorrente da cobertura          
-    real(8) :: coeficiente_sobrecarga = 0.d0            ! coeficiente de ponderação da carga decorrente da sobrecarga       
-    real(8) :: coeficiente_vento = 1.0d0                ! coeficiente de ponderação da carga decorrente do vento    
+    integer :: caso_vento = 0                                   !0 = pressão negativa máxima; 1 = pressão positiva máxima
+    real(8) :: coeficiente_pp = 1.0d0                           ! coeficiente de ponderação da carga decorrente do peso próprio          
+    real(8) :: coeficiente_cobertura = 1.0d0                    ! coeficiente de ponderação da carga decorrente da cobertura          
+    real(8) :: coeficiente_sobrecarga = 1.0d0                    ! coeficiente de ponderação da carga decorrente da sobrecarga       
+    real(8) :: coeficiente_vento = 1.4d0                        ! coeficiente de ponderação da carga decorrente do vento    
     real(8) :: peso_total
     real(8) :: dc
     type(barra_trelica), allocatable :: barra(:)
@@ -122,6 +122,7 @@
  
     end subroutine
     
+
     !**********************************************************************************************************************************
     subroutine funcao_objetivo(nd, nc, Vd, Vc, fob)
     !**********************************************************************************************************************************
@@ -133,9 +134,9 @@
         real(8) :: fob                                     ! função objetivo
         real(8) :: func_penal                           ! função penalidade
         real(8) :: g1                                   ! inequação de restrição quanto aos esforços axiais
-        real(8) :: g1_aux(13)
+        real(8), allocatable :: g1_aux(:)
         real(8) :: g2                                   ! inequação de restrição quanto ao indice de esbeltez das barras
-        real(8) :: g2_aux(13)
+        real(8), allocatable :: g2_aux(:)
         real(8) :: g3                                   ! inequação de restrição quanto ao deslocamento da estrutura
         real(8) :: g3_aux
         real(8) :: c = 1                                   ! coeficiente da função de penalização
@@ -152,7 +153,7 @@
             call node_barras(n_div, h1, num_nos, coord)
             
         !Estabelece o número de barras, conectividades e seus comprimentos
-            call barras_trelica (n_div, h1, coord, n_barras, barra)
+            call barras_trelica (n_div, h1, coord, inclinacao_diagonais, n_barras, barra)
             
         !Atribui uma seção transversal para cada barra de acordo com a lista de seções da AISC
             allocate(nome_cant_trelica(n_barras))
@@ -181,8 +182,8 @@
                 
                 barra(i_banzo_superior)%tipo = "2L"
                 barra(i_banzo_inferior)%tipo = "2L"
-                barra(i_diagonal)%tipo = "2L_cruz"
-                barra(i_montante)%tipo = "L"
+                barra(i_diagonal)%tipo = "2L"
+                barra(i_montante)%tipo = "2L"
                 
                 nome_cant_trelica(1:n_barras) = ' '
                 nome_cant_trelica(i_banzo_superior) = cant(Vd(1))%name
@@ -256,6 +257,8 @@
             call forca_axial_barras(barra, n_barras, deslocamentos, forca_axial)
             call analise_resistencia_axial(barra, fy, E, G, forca_axial, Nrd)
             
+
+            
             !-----------Peso total da estrutura!-------------------!
             peso_total = SUM(barra(:)%peso)
             
@@ -266,6 +269,7 @@
             !-------------trecho em que se calcula a penalidade da restrição com relação aos esforços - g1-------------------!
  
             g1 = 1.d0
+            allocate(g1_aux(n_barras))
             
             do i=1, n_barras
         
@@ -281,27 +285,30 @@
             !trecho em que se calcula a penalidade da restrição com relação a esbeltez das barras - g2
 !****************************************************************************************************    
             g2 = 1.d0
-    
+            allocate(g2_aux(n_barras))
+            
             do i=1, n_barras
-                if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then
-                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 200.d0
-                else
-                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%secao%r_min - 200.d0
-                end if
+                if(forca_axial(n_barras) < 0) then    
+                    if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then
+                        g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 200.d0
+                    else
+                        g2_aux(i) = barra(i)%comprimento/barra(i)%s%secao%r_min - 200.d0
+                    end if
                 
-                if(g2_aux(i) > 0) then
-                    g2 = g2 + g2_aux(i)
-                end if
-                if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then  
-                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 300.d0
+                    if(g2_aux(i) > 0) then
+                        g2 = g2 + g2_aux(i)
+                    end if
                 else
-                    g2_aux(i) = barra(i)%comprimento/barra(i)%s%secao%r_min - 300.d0
-                end if
+                    if(barra(i)%tipo == "2L" .OR. barra(i)%tipo == "2L_cruz") then  
+                        g2_aux(i) = barra(i)%comprimento/barra(i)%s%r_min - 300.d0
+                    else
+                        g2_aux(i) = barra(i)%comprimento/barra(i)%s%secao%r_min - 300.d0
+                    end if
                 
-                if(g2_aux(i) > 0) then
-                    g2 = g2 + g2_aux(i)
+                    if (g2_aux(i) > 0) then
+                        g2 = g2 + g2_aux(i)
+                    end if
                 end if
-        
             end do
 
     
@@ -325,6 +332,18 @@
      if(g3 > 1.d0) func_penal = func_penal + c*g3**2
     
      fob = peso_total + func_penal
+     
+     
+     deallocate(MatRigid)
+     deallocate(pressao_vento(1)%angulo_theta)
+     deallocate(pressao_vento(2)%angulo_theta)
+     deallocate(pressao_vento(3)%angulo_theta)
+     deallocate(barra)
+     deallocate(v_glc)
+     deallocate(Y)
+     deallocate(deslocamentos)
+     !deallocate(cond_cont)
+     
     end subroutine
     
     end module

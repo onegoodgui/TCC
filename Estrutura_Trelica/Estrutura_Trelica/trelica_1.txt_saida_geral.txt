@@ -1,8 +1,8 @@
  &PARAMETROS_HSA
  PARAM%NVD     =           4,
  PARAM%NVC     =           0,
- PARAM%LI_VD   = 4*44, 9*0,
- PARAM%LS_VD   = 4*44, 9*0,
+ PARAM%LI_VD   = 4*1, 9*0,
+ PARAM%LS_VD   = 4*61, 9*0,
  PARAM%LI_VC   = 5*0.000000000000000E+000  ,
  PARAM%LS_VC   = 5*0.000000000000000E+000  ,
  PARAM%MAXIT   =        4000,

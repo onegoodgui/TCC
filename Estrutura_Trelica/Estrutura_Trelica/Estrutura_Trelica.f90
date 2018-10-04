@@ -39,6 +39,7 @@ module Estrutura_Trelica
         type(LLSt_var) :: s
         real(8) :: peso
         character(7) :: tipo
+        real(8) :: esbeltez
     end type
         
     
@@ -48,21 +49,17 @@ module Estrutura_Trelica
     end type
     
     ! Variaveis para montagem da estrutura ---------------------------------------------------------------
+
+    integer :: theta                                           ! numero total de nós da estrutura
+    integer :: num_nos
+    type(node) :: coord
     real(8) :: L                                               ! vão horizontal entre as extremidades do pórtico [cm]
     real(8) :: h1                                              ! altura do montante de extremidade [cm]
     real(8) :: dist_trelica                                    ! distância do vão entre dois pórticos consecutivos [cm]
     integer :: n_div                                           ! divisões do comprimento referente a L/2 [cm]
-    integer :: theta                                           ! numero total de nós da estrutura
-    integer :: num_nos
-    type(node) :: coord
-    
-
-    
+    character(25) :: inclinacao_diagonais                      !
     type(terca_list), allocatable :: terca(:)
-    
-  
-    
-    
+
     real(8), parameter :: pi = 4.d0*atan(1.d0)
     
     contains
@@ -105,6 +102,7 @@ module Estrutura_Trelica
                 coord%no(2*(i)-1)%y = 0.d0 
                 coord%no(2*(i))%y = h1 + (i-1)*L/(2*n_div)*tan(theta*pi/180)
              end do
+             n=0
         else
             !---------COBERTURA TRIANGULAR -----------
             num_nos = 4*n_div
@@ -140,11 +138,12 @@ module Estrutura_Trelica
     end subroutine
     
     !***************************************************************************************************************************************
-    subroutine barras_trelica (n_div, h1, coord, n_barras, barra)
+    subroutine barras_trelica (n_div, h1, coord, inclinacao_diagonais, n_barras, barra)
     !***************************************************************************************************************************************
         integer(4), intent(in) :: n_div                                ! nº de divisões de L/2
         real(8), intent(in) :: h1                                      ! altura do montante de extremidade da cobertura
         type(node), intent(in) :: coord                                ! vetor com os nós e suas respectivas coordenadas
+        character(25), intent(in) :: inclinacao_diagonais
         integer, intent(out) :: n_barras                               ! número de barras da estrutura treliçada
         type(barra_trelica), intent(out), allocatable :: barra(:)      ! vetor com as barras, suas conectividades e seu comprimento
         
@@ -236,6 +235,65 @@ module Estrutura_Trelica
             
             end do
             
+            if(inclinacao_diagonais == "segundo quadrante") then
+                do i = 1, 2*n_div
+                    if(3 +4*(i-1) < 4*n_div +1) then
+                        barra(3 +4*(i-1))%conectividades(1) = barra(3 +4*(i-1))%conectividades(1) - 1
+                        barra(3 +4*(i-1))%conectividades(2) = barra(3 +4*(i-1))%conectividades(2) + 1
+                        
+                        barra(3 +4*(i-1))%node(1)%x = coord%no(barra(3 +4*(i-1))%conectividades(1))%x
+                        barra(3 +4*(i-1))%node(1)%y = coord%no(barra(3 +4*(i-1))%conectividades(1))%y
+                        barra(3 +4*(i-1))%node(2)%x = coord%no(barra(3 +4*(i-1))%conectividades(2))%x
+                        barra(3 +4*(i-1))%node(2)%y = coord%no(barra(3 +4*(i-1))%conectividades(2))%y
+                        
+                    else if (3 +4*(i-1) > 4*n_div +1) then
+                        barra(3 +4*(i-1))%conectividades(1) = barra(3 +4*(i-1))%conectividades(1) + 1
+                        barra(3 +4*(i-1))%conectividades(2) = barra(3 +4*(i-1))%conectividades(2) - 1
+                                                                    
+                        barra(3 +4*(i-1))%node(1)%x = coord%no(barra(3 +4*(i-1))%conectividades(1))%x
+                        barra(3 +4*(i-1))%node(1)%y = coord%no(barra(3 +4*(i-1))%conectividades(1))%y
+                        barra(3 +4*(i-1))%node(2)%x = coord%no(barra(3 +4*(i-1))%conectividades(2))%x
+                        barra(3 +4*(i-1))%node(2)%y = coord%no(barra(3 +4*(i-1))%conectividades(2))%y
+                    end if
+                end do
+                
+                    
+                else if (inclinacao_diagonais == "mista") then
+                    barra(3)%conectividades(1) = barra(3)%conectividades(1) - 1
+                    barra(3)%conectividades(2) = barra(3)%conectividades(2) + 1
+                    
+                        barra(3)%node(1)%x = coord%no(barra(3)%conectividades(1))%x
+                        barra(3)%node(1)%y = coord%no(barra(3)%conectividades(1))%y
+                        barra(3)%node(2)%x = coord%no(barra(3)%conectividades(2))%x
+                        barra(3)%node(2)%y = coord%no(barra(3)%conectividades(2))%y
+                        
+                    barra(4*(n_div-1)+3)%conectividades(1) = barra(4*(n_div-1)+3)%conectividades(1) - 1
+                    barra(4*(n_div-1)+3)%conectividades(2) = barra(4*(n_div-1)+3)%conectividades(2) + 1
+                    
+                        barra(4*(n_div-1)+3)%node(1)%x = coord%no(barra(4*(n_div-1)+3)%conectividades(1))%x
+                        barra(4*(n_div-1)+3)%node(1)%y = coord%no(barra(4*(n_div-1)+3)%conectividades(1))%y
+                        barra(4*(n_div-1)+3)%node(2)%x = coord%no(barra(4*(n_div-1)+3)%conectividades(2))%x
+                        barra(4*(n_div-1)+3)%node(2)%y = coord%no(barra(4*(n_div-1)+3)%conectividades(2))%y
+                    
+                    barra(4*(n_div)+3)%conectividades(1) = barra(4*(n_div)+3)%conectividades(1) + 1
+                    barra(4*(n_div)+3)%conectividades(2) = barra(4*(n_div)+3)%conectividades(2) - 1
+                    
+                        barra(4*(n_div)+3)%node(1)%x = coord%no(barra(4*(n_div)+3)%conectividades(1))%x
+                        barra(4*(n_div)+3)%node(1)%y = coord%no(barra(4*(n_div)+3)%conectividades(1))%y
+                        barra(4*(n_div)+3)%node(2)%x = coord%no(barra(4*(n_div)+3)%conectividades(2))%x
+                        barra(4*(n_div)+3)%node(2)%y = coord%no(barra(4*(n_div)+3)%conectividades(2))%y
+                        
+                    barra(8*(n_div)-1)%conectividades(1) = barra(8*(n_div)-1)%conectividades(1) + 1
+                    barra(8*(n_div)-1)%conectividades(2) = barra(8*(n_div)-1)%conectividades(2) - 1
+                    
+                        barra(8*(n_div)-1)%node(1)%x = coord%no(barra(8*(n_div)-1)%conectividades(1))%x
+                        barra(8*(n_div)-1)%node(1)%y = coord%no(barra(8*(n_div)-1)%conectividades(1))%y
+                        barra(8*(n_div)-1)%node(2)%x = coord%no(barra(8*(n_div)-1)%conectividades(2))%x
+                        barra(8*(n_div)-1)%node(2)%y = coord%no(barra(8*(n_div)-1)%conectividades(2))%y
+                else
+            end if
+            
+                
         else
             !---------COBERTURA TRIANGULAR -----------
             n_barras = 8*n_div-3
@@ -518,9 +576,11 @@ module Estrutura_Trelica
         type(cond_contorno), intent(inout), allocatable :: cond_cont(:)   ! vetor com as condições de contorno de cada nó da estrutura
         
         ! Variaveis internas -----------------
-        real(8) :: carga_terca
-        real(8) :: carga_telha = 0.00000625d0
-        real(8), allocatable :: regiao_telha(:)
+        real(8) :: carga_terca                      ! carga das terças (KN/cm)
+        real(8) :: carga_telha = 0.00000625d0       ! carga das telhas (KN/cm²)
+        real(8) :: d_beiral =  50.d0                ! dimensão do beiral paralela ao banzo superior (cm)
+        real(8) :: carga_beiral
+        real(8), allocatable :: regiao_telha(:)               
         real(8) :: area_telha
         integer :: i=0, n=0
         
@@ -545,10 +605,11 @@ module Estrutura_Trelica
         
         area_telha = L/(2*n_div*cos(theta*pi/180)) * dist_trelica
         carga_telha = carga_telha*area_telha
+        carga_beiral = d_beiral*dist_trelica*0.00000625d0
         
         do i = 1, num_nos/2
             if(i == 1 .OR. i == num_nos/2) then
-                cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_telha/2
+                cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_telha/2 - carga_beiral
                 cycle
             end if
             cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_telha

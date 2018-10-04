@@ -133,7 +133,7 @@ module CargaVento
     
     subroutine Fator_Topografico_S2 (cat, cls, z, tab_S2, S2)
     
-    character, intent(in) :: cat                ! categoria escolhida de acordo com fator S2
+    character(2), intent(in) :: cat             ! categoria escolhida de acordo com fator S2
     character, intent(in) :: cls                ! classe escolhida de acordo com fator S2
     real(8), intent(in) :: z                    ! Altura medida a partir da superfície do terreno no ponto considerado
     type(tabela_S2), intent(in) :: tab_S2(5)    ! tabela com os valores dos parâmetros meteorológicos do fator S2
@@ -166,7 +166,7 @@ module CargaVento
         Fr = 0.95d0
     end if
     
-S2 = b*Fr*(z/10)**p
+S2 = b*Fr*((z+5)/10)**p
 
     end subroutine
     

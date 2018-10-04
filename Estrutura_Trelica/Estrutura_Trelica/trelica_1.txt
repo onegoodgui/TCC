@@ -9,8 +9,8 @@ ffop =
 
 param%nvD = 4
 param%nvC = 0
-param%Li_vd = 4*44
-param%Ls_vd = 4*44
+param%Li_vd = 4*1
+param%Ls_vd = 4*61
 param%Li_vc = 0
 param%Ls_vc = 0
 

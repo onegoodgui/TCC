@@ -9,30 +9,31 @@ d = 1
 
 &Fator_Top_S2
 
-cat = "I"
+cat = "IV"
 cls = "B"
 
 /
 
 &Pressao_dinamica
 
-Vo = 45
+Vo = 30
 /
 
 &Cofc_pressao
 
 h = 5
 a = 30
-b = 18 
+b = 20 
 ang_cobertura = 15
 /
 
 &Dados_geometricos
 
-L = 1800
-h1 = 100
+L = 2000
+h1 = 90
 dist_trelica = 600
-n_div = 3
+n_div = 4
+inclinacao_diagonais = "mista"
 /
 
 &Comb_acoes
