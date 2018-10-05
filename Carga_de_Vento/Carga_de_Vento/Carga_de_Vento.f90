@@ -344,6 +344,7 @@ S2 = b*Fr*((z+5)/10)**p
     real(8) :: forca_vento(2)
     real(8) :: forca_sobrecarga
     integer :: i=0, n=0
+    real(8) :: d_beiral =  50.d0                ! dimensão do beiral paralela ao banzo superior (cm)
     
     forca_vento(1) = F(1)*barra(4)%comprimento
     forca_vento(2) = F(2)*barra(4)%comprimento
@@ -357,16 +358,16 @@ S2 = b*Fr*((z+5)/10)**p
         end if
         if (2*i < 2*(n_div+1)) then
             if (2*i==2) then
-                cond_cont(2*i)%carga_vento(1) = forca_vento(1)*sin(theta*pi/180)/2 
-                cond_cont(2*i)%carga_vento(2) = -forca_vento(1)*cos(theta*pi/180)/2
+                cond_cont(2*i)%carga_vento(1) = (forca_vento(1)/2+F(1)*d_beiral)*sin(theta*pi/180) 
+                cond_cont(2*i)%carga_vento(2) = -(forca_vento(1)/2+F(1)*d_beiral)*cos(theta*pi/180)
                 cycle
             end if
             cond_cont(2*i)%carga_vento(1) = forca_vento(1)*sin(theta*pi/180) 
             cond_cont(2*i)%carga_vento(2) = -forca_vento(1)*cos(theta*pi/180) 
         else if (2*i > 2*(n_div+1)) then
             if (2*i == num_nos) then
-                cond_cont(2*i)%carga_vento(1) = - forca_vento(2)*sin(theta*pi/180)/2
-                cond_cont(2*i)%carga_vento(2) = - forca_vento(2)*cos(theta*pi/180)/2
+                cond_cont(2*i)%carga_vento(1) = - (forca_vento(2)/2+F(2)*d_beiral)*sin(theta*pi/180)
+                cond_cont(2*i)%carga_vento(2) = - (forca_vento(2)/2 + F(2)*d_beiral)*cos(theta*pi/180)
                 cycle
             end if
             cond_cont(2*i)%carga_vento(1) = - forca_vento(2)*sin(theta*pi/180)
@@ -375,24 +376,24 @@ S2 = b*Fr*((z+5)/10)**p
     end do
     
     !Carga de sobrecarga ---------------------------------------------------------
-    forca_sobrecarga = -(0.25/(cos(theta*pi/180)*10000))*barra(4)%comprimento*dist_trelica
+    forca_sobrecarga = -(0.000025d0)*barra(2)%comprimento*dist_trelica
     
     do i = 1, (num_nos-1)/2
         if( 2*i == 2*(n_div+1)) then
             cond_cont(2*i)%carga_sobrecarga(1) = 0.d0
-            cond_cont(2*i)%carga_sobrecarga(2) = 2*forca_sobrecarga*cos(theta*pi/180)/2
+            cond_cont(2*i)%carga_sobrecarga(2) = 2*forca_sobrecarga/2
         cycle
         else if (2*i < 2*(n_div+1)) then
             if (2*i == 2) then
-                cond_cont(2*i)%carga_sobrecarga(1) = -forca_sobrecarga*sin(theta*pi/180)/2
-                cond_cont(2*i)%carga_sobrecarga(2) = forca_sobrecarga*cos(theta*pi/180)/2
-                cond_cont(num_nos)%carga_sobrecarga(1) = -cond_cont(2*i)%carga_sobrecarga(1)
+                cond_cont(2*i)%carga_sobrecarga(1) = 0.d0
+                cond_cont(2*i)%carga_sobrecarga(2) = forca_sobrecarga/2 + d_beiral*cos(theta*pi/180)*dist_trelica*0.000025d0
+                cond_cont(num_nos)%carga_sobrecarga(1) = 0.d0
                 cond_cont(num_nos)%carga_sobrecarga(2) = cond_cont(2*i)%carga_sobrecarga(2)
                 cycle
             end if
-            cond_cont(2*i)%carga_sobrecarga(1) = -forca_sobrecarga*sin(theta*pi/180)
+            cond_cont(2*i)%carga_sobrecarga(1) = -forca_sobrecarga
         else
-            cond_cont(2*i)%carga_sobrecarga(1) =  forca_sobrecarga*sin(theta*pi/180)
+            cond_cont(2*i)%carga_sobrecarga(1) =  forca_sobrecarga
         end if
         
     cond_cont(2*i)%carga_sobrecarga(2) =  forca_sobrecarga*cos(theta*pi/180)

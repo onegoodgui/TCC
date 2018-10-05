@@ -1,20 +1,20 @@
 &execHSA
 
 tipo_problema = 'trelica1'
-NEA = 50
-ffop =
+NEA = 1
+ffop = 5E-03
 /
 
 &parametros_HSA
 
 param%nvD = 4
 param%nvC = 0
-param%Li_vd = 4*1
-param%Ls_vd = 4*61
+param%Li_vd = 1, 1, 1, 1
+param%Ls_vd = 61, 61, 61, 61
 param%Li_vc = 0
 param%Ls_vc = 0
 
-param%maxIT = 4000
+param%maxIT = 40000
 param%maxAF = 2000
 
 param%verificar_parametros = .false.

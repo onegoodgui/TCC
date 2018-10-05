@@ -504,8 +504,8 @@ module Estrutura_Trelica
             end do
             
             do i = 1, n_barras
-                cond_cont((barra(i)%conectividades(1)))%carga_pp(2) = cond_cont((barra(i)%conectividades(1)))%carga_pp(2) -barra(i)%peso/2
-                cond_cont((barra(i)%conectividades(2)))%carga_pp(2) = cond_cont((barra(i)%conectividades(2)))%carga_pp(2) -barra(i)%peso/2
+                cond_cont((barra(i)%conectividades(1)))%carga_pp(2) =  -barra(i)%peso/2
+                cond_cont((barra(i)%conectividades(2)))%carga_pp(2) =  -barra(i)%peso/2
             end do
             
             ! cálculo do peso da estrutura, dividida em 4*n_div regiões
@@ -591,13 +591,13 @@ module Estrutura_Trelica
         
         do i=1, num_nos/2
             if (i==1 .OR. i==num_nos/2) then
-                cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_terca/2
+                cond_cont(2*i)%carga_telha_telhado(2) = - carga_terca/2
                 cycle
             else if (2*i == 2*(n_div+1)) then
-                cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_terca*2
+                cond_cont(2*i)%carga_telha_telhado(2) = - carga_terca*2
                 cycle
             end if
-            cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_terca
+            cond_cont(2*i)%carga_telha_telhado(2) =  - carga_terca
         end do       
         
         !carga das telhas -----------------------
@@ -615,11 +615,17 @@ module Estrutura_Trelica
             cond_cont(2*i)%carga_telha_telhado(2) = cond_cont(2*i)%carga_telha_telhado(2) - carga_telha
             
         end do
+        carga_telha = 0.d0
         
         end subroutine
         
         
-        
+        character(len=20) function str(k)
+!       "Convert an integer to string."
+        integer, intent(in) :: k
+        write (str, *) k
+        str = adjustl(str)
+        end function str
         
         
         

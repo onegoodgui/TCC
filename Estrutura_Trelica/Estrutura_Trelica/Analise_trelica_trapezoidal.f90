@@ -6,6 +6,7 @@
     use LLS
     use LLScross
     use LLSt
+    use numRAND
     
     implicit none
     
@@ -56,7 +57,7 @@
     integer :: caso_vento = 0                                   !0 = pressão negativa máxima; 1 = pressão positiva máxima
     real(8) :: coeficiente_pp = 1.0d0                           ! coeficiente de ponderação da carga decorrente do peso próprio          
     real(8) :: coeficiente_cobertura = 1.0d0                    ! coeficiente de ponderação da carga decorrente da cobertura          
-    real(8) :: coeficiente_sobrecarga = 1.0d0                    ! coeficiente de ponderação da carga decorrente da sobrecarga       
+    real(8) :: coeficiente_sobrecarga = 0.d0                    ! coeficiente de ponderação da carga decorrente da sobrecarga       
     real(8) :: coeficiente_vento = 1.4d0                        ! coeficiente de ponderação da carga decorrente do vento    
     real(8) :: peso_total
     real(8) :: dc
@@ -342,7 +343,7 @@
      deallocate(v_glc)
      deallocate(Y)
      deallocate(deslocamentos)
-     !deallocate(cond_cont)
+     deallocate(cond_cont)
      
     end subroutine
     

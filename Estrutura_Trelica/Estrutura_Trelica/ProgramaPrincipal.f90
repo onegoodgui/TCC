@@ -13,7 +13,7 @@
     integer, allocatable :: Vd(:)                      ! valor das variaveis discretas
     real(8), allocatable :: Vc(:)                      ! valor das variaveis continuas
     real(8) :: fob                                     ! função objetivo
-    
+    character(14) :: TCPLOT = "VARIABLES ="
     
     !---Variáveis usadas na execução do HSA
     type(HSA_par):: param
@@ -31,7 +31,7 @@
     character(len=500):: nomearquivo, texto
     
     !---Variáveis definindo as unidades de entrada e saída de dados    
-    integer,parameter:: uni_dad = 501, uni_print=502, uni_parametros = 503, uni_sai = 504, uni_Rot = 505, uni_Rop = 506
+    integer,parameter:: uni_dad = 501, uni_print=502, uni_parametros = 503, uni_sai = 504, uni_Rot = 505, uni_Rop = 506, uni_result = 507
     
     
     
@@ -157,6 +157,12 @@
             !call impr_ocl1(param%nVD,sHSA(ex)%ot%vd,texto)
             write(*,'(i3.3," fob=",ES14.6,2x,A)')ex,sHSA(ex)%ot%fob,trim(texto(param%nVD*2:))
             write(uni_sai,'(A,i2.2," fob= ",ES14.6,2x,A)') "ocl1 -> ex=",ex,sHSA(ex)%ot%fob,trim(texto)
+            open( unit=uni_result , file="resultados_NEA_"//trim(str(ex))//".txt" , action='write',iostat=iii)
+                write(uni_result, '(A, 8A7)') TCPLOT, 'it', 'Vd(1)', 'Vd(2)', 'Vd(3)', 'Vd(4)', 'fob', 'AF_ot','fob_ot'
+                do i = 1, param%maxAF
+                    write(uni_result, '(I20 , I6 , I8 , I6, I6, G15.6, I6, G15.6)') i, sHSA(ex)%HAF(i)%Vd(1:4), sHSA(ex)%HAF(i)%fob, sHSA(ex)%OT_HAF(i), sHSA(ex)%HAF(sHSA(ex)%OT_HAF(i))%fob
+                end do
+            close(uni_result)
         enddo            
         
        ! call avaliar_HSAr(NEA,ffop,param,sHSA,Eot,Rot,Eop,Rop)
