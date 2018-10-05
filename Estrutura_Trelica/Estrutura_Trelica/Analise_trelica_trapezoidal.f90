@@ -11,7 +11,7 @@
     implicit none
     
     ! Variaveis ---------------------------------------------------------------------------------------------------------------------
-    integer, parameter :: uni_dad_estrut = 150, uni_entrada = 300, uni_dad_tercas = 500
+    integer, parameter :: uni_dad_estrut = 150, uni_entrada = 300, uni_dad_tercas = 500, uni_validacao = 508
     !Variaveis LLS -----------------------------------------------------------------------------------------------------------------
     integer :: n_cant
     type(LLS_var), allocatable :: cant(:)
@@ -54,12 +54,12 @@
     !Variables Resistência
     real(8), allocatable :: Nrd(:)                              ! Força resistente de calculo das barras de treliça [KN] 
     !Variables Otimização
-    integer :: caso_vento = 0                                   !0 = pressão negativa máxima; 1 = pressão positiva máxima
-    real(8) :: coeficiente_pp = 1.0d0                           ! coeficiente de ponderação da carga decorrente do peso próprio          
-    real(8) :: coeficiente_cobertura = 1.0d0                    ! coeficiente de ponderação da carga decorrente da cobertura          
-    real(8) :: coeficiente_sobrecarga = 0.d0                    ! coeficiente de ponderação da carga decorrente da sobrecarga       
-    real(8) :: coeficiente_vento = 1.4d0                        ! coeficiente de ponderação da carga decorrente do vento    
-    real(8) :: peso_total
+    integer :: caso_vento = 0                                   !0 = sucção máxima; 1 = sobrepressão máxima
+    real(8) :: coeficiente_pp = 1.25d0                           ! coeficiente de ponderação da carga decorrente do peso próprio          
+    real(8) :: coeficiente_cobertura = 1.25d0                    ! coeficiente de ponderação da carga decorrente da cobertura          
+    real(8) :: coeficiente_sobrecarga = 1.5d0                    ! coeficiente de ponderação da carga decorrente da sobrecarga       
+    real(8) :: coeficiente_vento = 1.4d0                             ! coeficiente de ponderação da carga decorrente do vento    
+    real(8) :: peso_total(2000)
     real(8) :: dc
     type(barra_trelica), allocatable :: barra(:)
     type(cond_contorno), allocatable :: cond_cont(:)
@@ -71,6 +71,7 @@
     integer :: n                                        ! variável de recurso cíclico 
     integer :: junk1
     character :: junk2
+    integer :: num_AF
     
     
     contains
@@ -258,10 +259,12 @@
             call forca_axial_barras(barra, n_barras, deslocamentos, forca_axial)
             call analise_resistencia_axial(barra, fy, E, G, forca_axial, Nrd)
             
-
+            num_AF = num_AF +1
             
             !-----------Peso total da estrutura!-------------------!
-            peso_total = SUM(barra(:)%peso)
+            peso_total(num_AF) = SUM(barra(:)%peso)
+            write(uni_validacao, '(I6, G15.6)') num_AF, peso_total(num_AF)
+            
             
             !------------Deslocamento máximo da estrutura!-----------!
             dc = maxval(abs(deslocamentos(:,1)))
@@ -332,7 +335,7 @@
      
      if(g3 > 1.d0) func_penal = func_penal + c*g3**2
     
-     fob = peso_total + func_penal
+     fob = peso_total(num_AF) + func_penal
      
      
      deallocate(MatRigid)

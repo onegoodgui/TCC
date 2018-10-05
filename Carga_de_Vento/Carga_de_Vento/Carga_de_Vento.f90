@@ -391,12 +391,12 @@ S2 = b*Fr*((z+5)/10)**p
                 cond_cont(num_nos)%carga_sobrecarga(2) = cond_cont(2*i)%carga_sobrecarga(2)
                 cycle
             end if
-            cond_cont(2*i)%carga_sobrecarga(1) = -forca_sobrecarga
+            !cond_cont(2*i)%carga_sobrecarga(1) = -forca_sobrecarga
         else
-            cond_cont(2*i)%carga_sobrecarga(1) =  forca_sobrecarga
+            !cond_cont(2*i)%carga_sobrecarga(1) =  forca_sobrecarga
         end if
         
-    cond_cont(2*i)%carga_sobrecarga(2) =  forca_sobrecarga*cos(theta*pi/180)
+    cond_cont(2*i)%carga_sobrecarga(2) =  forca_sobrecarga
     end do 
                     
     end subroutine

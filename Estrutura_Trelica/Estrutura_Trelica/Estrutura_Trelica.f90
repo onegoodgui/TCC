@@ -235,7 +235,7 @@ module Estrutura_Trelica
             
             end do
             
-            if(inclinacao_diagonais == "segundo quadrante") then
+            if(inclinacao_diagonais == "/\") then
                 do i = 1, 2*n_div
                     if(3 +4*(i-1) < 4*n_div +1) then
                         barra(3 +4*(i-1))%conectividades(1) = barra(3 +4*(i-1))%conectividades(1) - 1
