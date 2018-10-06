@@ -1,7 +1,7 @@
 &execHSA
 
 tipo_problema = 'trelica1'
-NEA = 3
+NEA = 10
 ffop = 5E-03
 /
 

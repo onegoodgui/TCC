@@ -14,6 +14,10 @@
     real(8), allocatable :: Vc(:)                      ! valor das variaveis continuas
     real(8) :: fob                                     ! função objetivo
     character(14) :: TCPLOT = "VARIABLES ="
+    real(8) :: media_it_fob = 0.d0
+    real(8) :: variancia_it_fob = 0.d0
+    real(8) :: desvio_padrao_it_fob = 0.d0
+    real(8) :: termo_quadrado= 0.d0
     
     !---Variáveis usadas na execução do HSA
     type(HSA_par):: param
@@ -31,7 +35,7 @@
     character(len=500):: nomearquivo, texto
     
     !---Variáveis definindo as unidades de entrada e saída de dados    
-    integer,parameter:: uni_dad = 501, uni_print=502, uni_parametros = 503, uni_sai = 504, uni_Rot = 505, uni_Rop = 506, uni_result = 507 
+    integer,parameter:: uni_dad = 501, uni_print=502, uni_parametros = 503, uni_sai = 504, uni_Rot = 505, uni_Rop = 506, uni_result = 507, uni_estatistica = 510 
     
     
     
@@ -164,21 +168,36 @@
             write(uni_sai,'(A,i2.2," fob= ",ES14.6,2x,A)') "ocl1 -> ex=",ex,sHSA(ex)%ot%fob,trim(texto)
             open( unit=uni_result , file="resultados_NEA_"//trim(str(ex))//".txt" , action='write',iostat=iii)
                 write(uni_result, '(A, 7A7, 2A12)') TCPLOT, 'it', 'Vd(1)', 'Vd(2)', 'Vd(3)', 'Vd(4)', 'fob', 'pp', 'AF_ot','fob_ot'
-                do i = 1, param%maxAF
-                    write(uni_result, '(I20 , I6 , I8 , I6, I6, 2G15.6, I6, G15.6)') i, sHSA(ex)%HAF(i)%Vd(1:4), sHSA(ex)%HAF(i)%fob, peso_total(i), sHSA(ex)%OT_HAF(i), sHSA(ex)%HAF(sHSA(ex)%OT_HAF(i))%fob
+                do i = 1, sHSA(ex)%IT
+                    j = sHSA(ex)%OT_HAF(i)
+                    write(uni_result, '(I20 , I6 , I8 , I6, I6, 2G15.6, I6, G15.6)') i, sHSA(ex)%HAF(j)%Vd(1:4), sHSA(ex)%HAF(j)%fob, peso_total(j), sHSA(ex)%OT_HAF(j), sHSA(ex)%HAF(j)%fob
                 end do
+                media_it_fob = media_it_fob + sHSA(ex)%IT_OT
+                termo_quadrado = termo_quadrado + sHSA(ex)%IT_OT**2
+                if(ex == NEA) then
+                    media_it_fob = media_it_fob/NEA
+                    variancia_it_fob = 1.d0/(NEA-1.d0)*(termo_quadrado - NEA*(media_it_fob)**2)
+                    desvio_padrao_it_fob = sqrt(variancia_it_fob)
+                    open(unit = uni_estatistica, file="dados_estatisticos.txt", action='write', iostat=iii)
+                        write(uni_estatistica, '(A, 3A7)') TCPLOT, 'média', 'variância','desvio-padrão'
+                        write(uni_estatistica, '(G15.6,G17.8,G15.6 )') media_it_fob, variancia_it_fob, desvio_padrao_it_fob
+                    close(unit=uni_estatistica)
+                end if
+                         
             close(uni_result)
             close(uni_validacao)
             num_AF = 0.d0
             
-            if(ex == 1) then
-                inclinacao_diagonais = "/\"
-            else if(ex == 2) then
-                inclinacao_diagonais = "\/"
-            end if
+            !if(ex == 1) then
+            !    inclinacao_diagonais = "/\"
+            !else if(ex == 2) then
+            !    inclinacao_diagonais = "\/"
+            !end if
             
         enddo            
         
+
+                    
        ! call avaliar_HSAr(NEA,ffop,param,sHSA,Eot,Rot,Eop,Rop)
        ! call imprimir_HSAr(uni_Rot,Eot,Rot,uni_Rop,Eop,Rop)    
         

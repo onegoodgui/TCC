@@ -504,8 +504,8 @@ module Estrutura_Trelica
             end do
             
             do i = 1, n_barras
-                cond_cont((barra(i)%conectividades(1)))%carga_pp(2) =  -barra(i)%peso/2
-                cond_cont((barra(i)%conectividades(2)))%carga_pp(2) =  -barra(i)%peso/2
+                cond_cont((barra(i)%conectividades(1)))%carga_pp(2) = cond_cont((barra(i)%conectividades(1)))%carga_pp(2) -barra(i)%peso/2
+                cond_cont((barra(i)%conectividades(2)))%carga_pp(2) = cond_cont((barra(i)%conectividades(2)))%carga_pp(2) -barra(i)%peso/2
             end do
             
             ! cálculo do peso da estrutura, dividida em 4*n_div regiões
@@ -577,7 +577,7 @@ module Estrutura_Trelica
         
         ! Variaveis internas -----------------
         real(8) :: carga_terca                      ! carga das terças (KN/cm)
-        real(8) :: carga_telha = 0.00000625d0       ! carga das telhas (KN/cm²)
+        real(8) :: carga_telha = 0.0000120d0       ! carga das telhas (KN/cm²)
         real(8) :: d_beiral =  50.d0                ! dimensão do beiral paralela ao banzo superior (cm)
         real(8) :: carga_beiral
         real(8), allocatable :: regiao_telha(:)               
@@ -605,7 +605,7 @@ module Estrutura_Trelica
         
         area_telha = L/(2*n_div*cos(theta*pi/180)) * dist_trelica
         carga_telha = carga_telha*area_telha
-        carga_beiral = d_beiral*dist_trelica*0.00000625d0
+        carga_beiral = d_beiral*dist_trelica*0.0000120d0
         
         do i = 1, num_nos/2
             if(i == 1 .OR. i == num_nos/2) then
