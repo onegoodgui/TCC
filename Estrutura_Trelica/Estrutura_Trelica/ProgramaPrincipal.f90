@@ -141,6 +141,11 @@
         read (uni_dad_vento, nml = Dados_geometricos)
     close (unit = uni_dad_vento)
     
+    !Leitura dos dados do problema referentes aos coeficientes de ponderação e ao caso de carga de vento (0 ou 1) -------------------------
+    open (unit = uni_dad_vento, file = 'Vento_Entrada.txt', action='read')        
+        read (uni_dad_vento, nml = Coeficientes_Ponderacao)
+    close (unit = uni_dad_vento)
+    
     !Armazenamento dos dados do problema referentes aos vários perfis de terças  -----------------------------------------------------------
     open (unit = uni_dad_tercas, file = 'dados_tercas.txt', action='read')        
         call lista_tercas(uni_dad_tercas, terca)
@@ -156,11 +161,9 @@
     end do
 
 
-        
+
         do ex = 1 , NEA
-                 open( unit=uni_validacao , file="pp_validacao"//trim(str(ex))//".txt" , action='write')
-                 write(uni_validacao, '(A, 2A7)') TCPLOT, 'nAF', 'pp'
-            
+
             call iniciar_HSA_sai(param,sHSA(ex))
             call otimiza_HSA(funcao_objetivo,param,sHSA(ex))
             !call impr_ocl1(param%nVD,sHSA(ex)%ot%vd,texto)
@@ -170,7 +173,7 @@
                 write(uni_result, '(A, 7A7, 2A12)') TCPLOT, 'it', 'Vd(1)', 'Vd(2)', 'Vd(3)', 'Vd(4)', 'fob', 'pp', 'AF_ot','fob_ot'
                 do i = 1, sHSA(ex)%IT
                     j = sHSA(ex)%OT_HAF(i)
-                    write(uni_result, '(I20 , I6 , I8 , I6, I6, 2G15.6, I6, G15.6)') i, sHSA(ex)%HAF(j)%Vd(1:4), sHSA(ex)%HAF(j)%fob, peso_total(j), sHSA(ex)%OT_HAF(j), sHSA(ex)%HAF(j)%fob
+                    write(uni_result, '(I20 , I6 , I8 , I6, I6, 2G15.6, I6, G15.6)') i, sHSA(ex)%HAF(j)%Vd(1:4), sHSA(ex)%HAF(j)%fob, peso_total(j), j, sHSA(ex)%HAF(j)%fob
                 end do
                 media_it_fob = media_it_fob + sHSA(ex)%IT_OT
                 termo_quadrado = termo_quadrado + sHSA(ex)%IT_OT**2
@@ -179,13 +182,15 @@
                     variancia_it_fob = 1.d0/(NEA-1.d0)*(termo_quadrado - NEA*(media_it_fob)**2)
                     desvio_padrao_it_fob = sqrt(variancia_it_fob)
                     open(unit = uni_estatistica, file="dados_estatisticos.txt", action='write', iostat=iii)
-                        write(uni_estatistica, '(A, 3A7)') TCPLOT, 'média', 'variância','desvio-padrão'
-                        write(uni_estatistica, '(G15.6,G17.8,G15.6 )') media_it_fob, variancia_it_fob, desvio_padrao_it_fob
+                        write(uni_estatistica, '(A, A8, A12, A15)') TCPLOT, 'média', 'variância','desvio-padrão'
+                        write(uni_estatistica, '(G20.6,G16.7,G16.7 )') media_it_fob, variancia_it_fob, desvio_padrao_it_fob
                     close(unit=uni_estatistica)
+                    media_it_fob = 0.d0
+                    termo_quadrado = 0.d0
+                    desvio_padrao_it_fob = 0.d0
                 end if
                          
             close(uni_result)
-            close(uni_validacao)
             num_AF = 0.d0
             
             !if(ex == 1) then

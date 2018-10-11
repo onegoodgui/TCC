@@ -33,10 +33,16 @@ L = 2000
 h1 = 90
 dist_trelica = 600
 n_div = 4
-inclinacao_diagonais = "mista"
+inclinacao_diagonais = "/\"
 /
 
-&Comb_acoes
+&Coeficientes_Ponderacao
+
+caso_vento = 0
+coeficiente_pp = 1.25d0                                             
+coeficiente_cobertura = 1.25d0                                    
+coeficiente_sobrecarga = 1.50d0                                
+coeficiente_vento = 0.0d0                               
 
 
 

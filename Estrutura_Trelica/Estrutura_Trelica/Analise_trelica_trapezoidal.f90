@@ -52,13 +52,15 @@
     !Variables Combinação de ações --------------------------------------------------------------------------------------------------
     type(comb_acoes) :: comb_acao(5)
     !Variables Resistência
-    real(8), allocatable :: Nrd(:)                              ! Força resistente de calculo das barras de treliça [KN] 
+    real(8), allocatable :: Nrd(:)                              ! Força resistente de calculo das barras de treliça [KN]
+    !Variables Ponderação
+    integer :: caso_vento                                       !0 = sucção máxima; 1 = sobrepressão máxima
+    real(8) :: coeficiente_pp                                   ! coeficiente de ponderação da carga decorrente do peso próprio          
+    real(8) :: coeficiente_cobertura                            ! coeficiente de ponderação da carga decorrente da cobertura          
+    real(8) :: coeficiente_sobrecarga                           ! coeficiente de ponderação da carga decorrente da sobrecarga       
+    real(8) :: coeficiente_vento                                ! coeficiente de ponderação da carga decorrente do vento
+    namelist /Coeficientes_Ponderacao/ caso_vento, coeficiente_pp, coeficiente_cobertura, coeficiente_sobrecarga, coeficiente_vento !namelist com as variáveis de ponderação
     !Variables Otimização
-    integer :: caso_vento = 0                                   !0 = sucção máxima; 1 = sobrepressão máxima
-    real(8) :: coeficiente_pp = 1.00d0                           ! coeficiente de ponderação da carga decorrente do peso próprio          
-    real(8) :: coeficiente_cobertura = 1.00d0                    ! coeficiente de ponderação da carga decorrente da cobertura          
-    real(8) :: coeficiente_sobrecarga = 0.00d0                    ! coeficiente de ponderação da carga decorrente da sobrecarga       
-    real(8) :: coeficiente_vento = 1.40d0                             ! coeficiente de ponderação da carga decorrente do vento    
     real(8) :: peso_total(2000)
     real(8) :: dc
     type(barra_trelica), allocatable :: barra(:)

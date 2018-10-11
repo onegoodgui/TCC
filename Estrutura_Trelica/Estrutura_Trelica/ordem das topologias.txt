@@ -1,0 +1,4 @@
+ordem das topologias:
+1 - mista
+2 - \/
+3 - /\
