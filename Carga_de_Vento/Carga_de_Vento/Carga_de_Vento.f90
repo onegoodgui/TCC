@@ -61,9 +61,7 @@ module CargaVento
         type(ang_vento) :: ang_0
         
     end type
-    
-        
-    
+
     
     integer, parameter :: uni_dad_S2 = 101  
     integer, parameter :: uni_dad_pressao = 110 

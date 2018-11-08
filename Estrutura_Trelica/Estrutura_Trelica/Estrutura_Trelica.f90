@@ -2,7 +2,6 @@ module Estrutura_Trelica
 
     use LLSt
     use LLScross
-    use sislin_pbMEF
     ! módulo para calculo dos esforços numa estrutura de treliça trapezoidal/triangular, de número de
     implicit none
 
@@ -630,4 +629,3 @@ module Estrutura_Trelica
         
         
     end module Estrutura_Trelica
-

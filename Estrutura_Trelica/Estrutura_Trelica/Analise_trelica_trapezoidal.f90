@@ -1,4 +1,4 @@
- module Analise_trelica_trapezoidal
+module Analise_trelica_trapezoidal
 
     use Matriz_Rigidez
     use CargaVento
@@ -55,13 +55,15 @@
     real(8), allocatable :: Nrd(:)                              ! Força resistente de calculo das barras de treliça [KN]
     !Variables Ponderação
     integer :: caso_vento                                       !0 = sucção máxima; 1 = sobrepressão máxima
+    character(30) :: verif                                      ! 'HSA' para avaliar com o algoritmo; 'minimo_abs' para testar todas as possibilidades
     real(8) :: coeficiente_pp                                   ! coeficiente de ponderação da carga decorrente do peso próprio          
     real(8) :: coeficiente_cobertura                            ! coeficiente de ponderação da carga decorrente da cobertura          
     real(8) :: coeficiente_sobrecarga                           ! coeficiente de ponderação da carga decorrente da sobrecarga       
     real(8) :: coeficiente_vento                                ! coeficiente de ponderação da carga decorrente do vento
-    namelist /Coeficientes_Ponderacao/ caso_vento, coeficiente_pp, coeficiente_cobertura, coeficiente_sobrecarga, coeficiente_vento !namelist com as variáveis de ponderação
+    namelist /Coeficientes_Ponderacao/ caso_vento, verif, coeficiente_pp, coeficiente_cobertura, coeficiente_sobrecarga, coeficiente_vento !namelist com as variáveis de ponderação
     !Variables Otimização
-    real(8) :: peso_total(2000)
+    real(8) :: peso_total(3000)
+    real(8) :: peso_total_abs
     real(8) :: dc
     type(barra_trelica), allocatable :: barra(:)
     type(cond_contorno), allocatable :: cond_cont(:)
@@ -264,8 +266,11 @@
             num_AF = num_AF +1
             
             !-----------Peso total da estrutura!-------------------!
+                if(verif == 'HSA') then
             peso_total(num_AF) = SUM(barra(:)%peso)
-            write(uni_validacao, '(I6, G15.6)') num_AF, peso_total(num_AF)
+                else
+            peso_total_abs = SUM(barra(:)%peso)
+                end if
             
             
             !------------Deslocamento máximo da estrutura!-----------!
@@ -336,8 +341,12 @@
      if(g2 > 1.d0) func_penal = func_penal + c*g2**2
      
      if(g3 > 1.d0) func_penal = func_penal + c*g3**2
-    
-     fob = peso_total(num_AF) + func_penal
+
+     if(verif == 'HSA') then
+        fob = peso_total(num_AF) + func_penal
+     else
+         fob = peso_total_abs + func_penal
+     end if
      
      
      deallocate(MatRigid)

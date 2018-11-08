@@ -1,0 +1,2 @@
+VARIABLES =      média   variância  desvio-padrão
+         2692.70        5364245.        2316.084    

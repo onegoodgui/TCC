@@ -13,6 +13,7 @@
     integer, allocatable :: Vd(:)                      ! valor das variaveis discretas
     real(8), allocatable :: Vc(:)                      ! valor das variaveis continuas
     real(8) :: fob                                     ! função objetivo
+    real(8) :: fob_min
     character(14) :: TCPLOT = "VARIABLES ="
     real(8) :: media_it_fob = 0.d0
     real(8) :: variancia_it_fob = 0.d0
@@ -30,7 +31,7 @@
     integer,allocatable:: Eot(:), Eop(:)    !Núm. de avaliações da função objetivo relativo a Rot e Rop, resp.
     
     !---Variáveis auxiliares
-    integer:: ii, iii !contadores
+    integer:: ii, iii, mm, kk, jj !contadores
     integer:: ncla
     character(len=500):: nomearquivo, texto
     
@@ -160,7 +161,8 @@
      call LLS_propriedades_geometricas (cant(i))
     end do
 
-
+    select case(verif)
+        case('HSA')
 
         do ex = 1 , NEA
 
@@ -189,7 +191,39 @@
                     termo_quadrado = 0.d0
                     desvio_padrao_it_fob = 0.d0
                 end if
-                         
+          end do
+
+	  case('minimo_abs')
+
+            allocate(Vd(4))
+            write(uni_result, '(A, 7A7, A12)') TCPLOT, 'Vd(1)', 'Vd(2)', 'Vd(3)', 'Vd(4)', 'fob', 'pp', 'fob_min'    
+            nd = 4
+            nc = 0
+            do ii = 1, 61
+                do jj = 1, 61
+                    do kk = 1, 61
+                        do mm = 1, 61
+                            Vd(1) = ii
+                            Vd(2) = jj
+                            Vd(3) = kk
+                            Vd(4)=  mm
+                            call funcao_objetivo(nd, nc, Vd, Vc, fob)
+                                
+                                
+                            if (Vd(4) == 1 .AND. Vd(3) == 1 .AND. Vd(2) == 1 .AND. Vd(1) == 1) then
+                                fob_min = fob
+                            else if (fob < fob_min .AND. fob == peso_total_abs) then
+                                fob_min = fob
+                                end if
+                                    
+                            write(uni_result, '(I20, 3I6, 3G15.6)') Vd(1), Vd(2), Vd(3), Vd(4), fob, peso_total_abs, fob_min
+                        end do
+                    end do
+                end do
+            end do
+            deallocate(Vd)
+            
+       end select         
             close(uni_result)
             num_AF = 0.d0
             
@@ -199,7 +233,7 @@
             !    inclinacao_diagonais = "\/"
             !end if
             
-        enddo            
+ !          
         
 
                     
